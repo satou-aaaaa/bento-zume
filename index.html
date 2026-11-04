@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
+<title>お弁当づめ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="形のちがうおかずを、お弁当箱にすき間なく詰める1日3箱のパズル。時間制限なし、3分で遊べます。">
+<meta name="theme-color" content="#f4ecdf">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="お弁当づめ">
+<meta property="og:title" content="お弁当づめ：おかずをすき間なく詰められる？">
+<meta property="og:description" content="形のちがうおかずを、お弁当箱にぴったり詰める。だれでも同じ1日3箱、3分で遊べます。">
+<meta property="og:url" content="https://satou-aaaaa.github.io/bento-zume/">
+<meta property="og:image" content="https://satou-aaaaa.github.io/bento-zume/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="お弁当づめ：おかずをお弁当箱に詰めるパズル">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+/* 曲げわっぱの木の箱に、色とりどりのおかず。箱は大きく、おかずは下の台に並ぶ */
+:root{
+  --bg:#f4ecdf; --paper:#fffaf2; --ink:#3a2a1f; --ink2:#7a6656; --line:#3a2a1f22;
+  --wood:#c98f57; --wood2:#9c6a3c; --rice:#fbf6ea; --red:#d2543d; --red2:#9e3b29; --leaf:#5f9a4a; --gold:#d79b2c;
+  --f-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-weight:500;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:14px;min-height:100%;box-sizing:border-box}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
+h1{font-weight:800;font-size:21px;margin:0;letter-spacing:.04em}
+h1 small{font-size:12px;letter-spacing:0;color:var(--ink2);margin-left:8px;font-weight:500}
+.icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px;background:var(--paper)}
+.icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.dots{display:flex;gap:6px;flex:1;max-width:120px}
+.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.dots i.on{background:var(--red)}.dots i.done{background:var(--ink)}
+button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:var(--red);color:#fff;font-weight:800;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 var(--red2)}
+button.main:active{transform:translateY(2px);box-shadow:0 2px 0 var(--red2)}
+button.main.alt{background:var(--wood2);box-shadow:0 4px 0 #6d4826}
+button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:15px;padding:0 12px;text-align:center}
+button.sub:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
+.note{color:var(--ink2);font-size:13px;line-height:1.6;margin:0;text-align:center}
+.note a{color:var(--red2)}
+/* お弁当箱 */
+.box{background:linear-gradient(90deg,#00000008 0 2px,transparent 2px 9px) var(--wood);border-radius:18px;padding:10px;box-shadow:inset 0 0 0 3px var(--wood2),0 6px 0 #6d482633}
+.grid{display:grid;gap:0;background:var(--rice);border-radius:10px;padding:3px;box-shadow:inset 0 2px 6px #00000022;touch-action:manipulation}
+.cell{all:unset;cursor:pointer;aspect-ratio:1;border-radius:0;background:transparent;border:1px solid #3a2a1f14;display:grid;place-items:center;font-size:clamp(18px,6vw,28px);position:relative;box-sizing:border-box}
+.cell.blk{background:repeating-linear-gradient(45deg,var(--wood) 0 4px,var(--wood2) 4px 6px);cursor:default}
+.cell.on{background:var(--c);border-width:2px;border-style:solid}
+.cell.cand{outline:2px dashed var(--red);outline-offset:-2px}
+.cell.lock::after{content:"";position:absolute;inset:3px;border:2px solid #ffffffaa;border-radius:4px}
+.cell.flash{animation:pop .4s}
+@keyframes pop{40%{transform:scale(1.12)}}
+.box.win{animation:win .6s}
+@keyframes win{30%{transform:rotate(-2deg) scale(1.03)}60%{transform:rotate(2deg) scale(1.03)}}
+/* おかずの台 */
+.tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:70px}
+.pc{all:unset;cursor:pointer;box-sizing:border-box;padding:7px;border-radius:12px;border:2px solid transparent;background:var(--paper);display:grid;gap:2px;min-height:44px;min-width:44px;place-content:center;box-shadow:0 3px 0 #3a2a1f22}
+.pc.sel{border-color:var(--red);transform:translateY(-3px)}
+.pc.used{opacity:.25}
+.pc i{width:clamp(14px,4.4vw,20px);aspect-ratio:1;border-radius:3px;display:grid;place-items:center;font-style:normal;font-size:clamp(10px,3vw,13px)}
+.pc i.on{background:var(--c)}
+.status{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--ink2);min-height:22px}
+.verdict{background:var(--paper);border:2px solid var(--wood2);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 0 #3a2a1f1c;animation:up .35s ease-out}
+@keyframes up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.verdict .hd{display:flex;justify-content:center;align-items:baseline;gap:10px;font-size:22px;font-weight:800}
+.stars{color:var(--gold);letter-spacing:.1em;font-size:20px}
+.stars .off{color:#3a2a1f26}
+.hint{background:var(--paper);border:1px solid var(--red);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center}
+/* ホーム */
+.title{font-weight:800;font-size:38px;letter-spacing:.08em;text-align:center;margin:4px 0 0}
+.lead{text-align:center;color:var(--ink2);margin:0;font-size:14px;line-height:1.7}
+.hero{width:min(80%,260px);margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stats b{display:block;font-size:20px}
+.stats small{color:var(--ink2);font-size:12px}
+.rank{text-align:center;font-size:13px;color:var(--red2)}
+.share{background:var(--paper);border-radius:14px;padding:12px;white-space:pre-line;font-size:15px;line-height:1.6;text-align:center;border:1px solid var(--line)}
+.shares{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shares a,.shares button{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:14px;font-weight:800;text-decoration:none;padding:0 6px;box-sizing:border-box;font-family:inherit;cursor:pointer}
+.big{font-weight:800;font-size:26px;text-align:center;margin:0}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:start}
+.minis .box{padding:5px;border-radius:10px}
+.minis .grid{padding:1px;border-radius:6px}
+.minis .cell{font-size:10px;border-radius:2px}
+.minis p{margin:4px 0 0;text-align:center;font-size:12px;color:var(--ink2)}
+/* おかず図鑑 */
+.dex{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.dex div{display:flex;align-items:center;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:8px 12px;min-height:44px}
+.dex b{font-size:26px}
+.dex span{font-size:13px;color:var(--ink2);line-height:1.4}
+.dex span em{font-style:normal;color:var(--ink);font-weight:800;font-size:14px}
+.dex .no b{filter:grayscale(1);opacity:.3}
+.lv{display:flex;gap:8px}
+.lv button{flex:1}
+dialog{border:none;border-radius:18px;background:var(--paper);color:var(--ink);max-width:400px;width:calc(100% - 32px);padding:20px;box-sizing:border-box}
+dialog::backdrop{background:#000000aa}
+dialog h2{margin:0 0 10px;letter-spacing:.06em}
+dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
+dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:var(--ink2)}
+dialog a{color:var(--red2)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;box-shadow:0 6px 20px #0005;max-width:90%;text-align:center}
+footer{margin-top:auto;text-align:center;font-size:12px;color:var(--ink2);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+footer a{color:var(--ink2);min-height:44px;display:inline-flex;align-items:center}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<dialog id="howto" aria-labelledby="howto-t">
+  <h2 id="howto-t">遊び方</h2>
+  <ol>
+    <li>下のおかずを押して選び、お弁当箱のます目を押すと、そこに詰めます。</li>
+    <li>同じますをもう一度押すと、向きと場所が変わります。</li>
+    <li>詰めたおかずを押すと台に戻ります。箱をすき間なく埋めたら完成です。</li>
+  </ol>
+  <p>今日の3箱（小・中・大）はだれでも同じで1日1回。時間制限はありません。</p>
+  <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a></p>
+  <button class="main" id="howto-ok" style="width:100%">わかった</button>
+</dialog>
+<script src="gen.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id), app = $("app");
+const SITE = "https://satou-aaaaa.github.io/bento-zume/";
+const FEEDBACK = "https://github.com/satou-aaaaa/bento-zume/issues/new?template=feedback.yml";
+const KEY = "bento-v1", EPOCH = "2026-11-04";
+const B = window.BENTO;
+
+// ---- 日付と種（日本時間。だれでも同じ3箱）----
+const jstNow = () => new Date(Date.now() + 9 * 3600e3);
+const todayKey = () => jstNow().toISOString().slice(0, 10);
+const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;
+// 今日の3箱：小・中・大。上級：特盛2箱（仕切りあり・ヒントなし）
+const dailyList = (k) => B.SIZES.map((S, i) => ({ seed: B.seedOf(k + ":d:" + i), s: i }));
+const hardList = (k) => [0, 1].map((i) => ({ seed: B.seedOf(k + ":h:" + i), s: 3 }));
+const sizeOf = (s) => (s === 3 ? B.HARD : B.SIZES[s]);
+const cache = new Map();
+const boxOf = (it) => { const k = it.seed + ":" + it.s; if (!cache.has(k)) cache.set(k, B.make(it.seed, sizeOf(it.s))); return cache.get(k); };
+const starsOf = (h) => (h === 0 ? 3 : h === 1 ? 2 : 1);
+const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;
+
+// ---- 記録（この端末の localStorage だけ）----
+// 進行中の遊びはモードごとに分けて持つ（練習を始めても今日・上級の途中経過を消さない）。eat：おかず → 詰めた数
+const fresh = () => ({ v: 1, days: {}, hdays: {}, eat: {}, boxes: 0, runs: {}, tut: false, kofi: {} });
+let MODE = "d";
+let mem = null; // 保存できない環境では、開いているあいだだけここに置く
+// 保存に失敗したあとはメモリと保存の両方を読む。記録（日ごとの結果・図鑑）は合わせて数は高いほう、途中経過は同じ日・同じ箱なら進んだほう
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0) * 1000 + (r.cur && r.cur.placed ? Object.keys(r.cur.placed).length : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (!x || !y) continue; if (x.date !== y.date) s.runs[m] = x.date > y.date ? x : y; else if (idOf(x) === idOf(y)) s.runs[m] = prog(x) > prog(y) ? x : y; } return s; }
+// 保存の前に読み直す（別のタブで進めた記録を消さない）
+function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
+function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }
+const RANKS = [[0, "見習い"], [10, "お弁当係"], [40, "詰め名人"], [120, "弁当職人"], [300, "弁当の達人"]];
+const rankOf = (n) => RANKS.filter((r) => n >= r[0]).pop()[1];
+const nextRank = (n) => RANKS.find((r) => r[0] > n);
+
+// ---- 画面 ----
+const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+const buzz = (n = 12) => { try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} };
+const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
+function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
+function openHow() { $("fb2").href = FEEDBACK; const d = $("howto"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+$("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); save((s) => { s.tut = true; }); };
+
+// 箱を描く。own：ます → おかずの番号（無ければ -1）
+function boxHtml(p, own, opt = {}) {
+  const cells = [];
+  for (let i = 0; i < p.w * p.h; i++) {
+    if (p.blocks.includes(i)) { cells.push(`<span class="cell blk" aria-hidden="true"></span>`); continue; }
+    const j = own[i], t = j >= 0 ? p.tray[j] : null, first = t && own.indexOf(j) === i;
+    const tag = opt.mini ? "span" : "button";
+    // 同じおかずのとなりは線を消し、ちがうおかずとの境目に線を引く
+    const x = i % p.w, y = Math.floor(i / p.w), edge = (dx, dy) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < p.w && Y < p.h && own[Y * p.w + X] === j ? "var(--c)" : "#3a2a1f99"; };
+    const bd = t ? `;border-color:${edge(0, -1)} ${edge(1, 0)} ${edge(0, 1)} ${edge(-1, 0)}` : "";
+    cells.push(`<${tag} class="cell${t ? " on" : ""}${t && opt.lock && opt.lock.includes(j) ? " lock" : ""}" data-i="${i}" ${t ? `style="--c:${t.food[2]}${bd}"` : ""} aria-label="${t ? t.food[0] : "空き"}">${first ? t.food[1] : ""}</${tag}>`);
+  }
+  return `<div class="box${opt.win ? " win" : ""}"><div class="grid" style="grid-template-columns:repeat(${p.w},1fr)">${cells.join("")}</div></div>`;
+}
+const ownOf = (p, placed) => { const own = new Array(p.w * p.h).fill(-1); for (const j in placed) for (const c of placed[j]) own[c] = +j; return own; };
+const solOwn = (p) => ownOf(p, Object.fromEntries(p.tray.map((t) => [t.id, t.sol])));
+
+function home() {
+  const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
+  for (const m of ["d", "h"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  const nr = nextRank(s.boxes);
+  const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
+  const sample = boxOf({ seed: 7, s: 0 });
+  app.innerHTML = `
+    <h1 class="title">お弁当づめ</h1>
+    <div class="hero" aria-hidden="true">${boxHtml(sample, solOwn(sample), { mini: true })}</div>
+    <p class="lead">形のちがうおかずを、すき間なく詰める。<br>だれでも同じ1日3箱。</p>
+    ${done ? `<div class="share">今日の結果　${done.h.map(sq).join("")}</div>` : ""}
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${B.SIZES[rd.res.length] ? B.SIZES[rd.res.length].name : ""}の箱）` : `今日の3箱を詰める <small>#${dayNo(k)}</small>`}</button>
+    ${done ? `<button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：特盛の2箱（仕切りあり・ヒントなし）"}</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">おかず図鑑 ${Object.keys(s.eat).length}/${B.FOODS.length}</button></div>
+    <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>遊んだ日</small></div><div><b>${s.boxes}</b><small>詰めた箱</small></div></div>
+    <p class="rank">称号：${rankOf(s.boxes)}${nr ? `（あと${nr[0] - s.boxes}箱で${nr[1]}）` : ""}</p>
+    ${footer()}`;
+  $("go-d").onclick = () => (done ? result("d", k) : startRun("d"));
+  if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : startRun("h"));
+  $("go-p").onclick = practiceMenu;
+  $("go-dex").onclick = dex;
+  bindFooter();
+  if (!s.tut) openHow();
+}
+function practiceMenu() {
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="もどる">←</button><h1>練習<small>今日の記録には入りません（図鑑には載ります）</small></h1><span></span></header>
+    <p class="note">箱の大きさを選ぶと、新しい箱が出ます。</p>
+    <div class="lv">${[...B.SIZES, B.HARD].map((S, i) => `<button class="sub" data-s="${i}" style="min-height:64px">${S.name}<br>${S.w}×${S.h}</button>`).join("")}</div>${footer()}`;
+  $("back").onclick = home;
+  document.querySelectorAll(".lv button").forEach((b) => (b.onclick = () => startRun("p", +b.dataset.s)));
+  bindFooter();
+}
+function startRun(mode, opt) {
+  const k = todayKey();
+  save((s) => {
+    if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
+    const list = mode === "d" ? dailyList(k) : mode === "h" ? hardList(k) : [{ seed: Math.floor(Math.random() * 2 ** 31), s: opt }];
+    s.runs[mode] = { mode, date: k, list, res: [], cur: null, id: Date.now().toString(36) };
+  });
+  MODE = mode;
+  play();
+}
+
+// 今の箱：{ i, date, id, p, placed:{おかず:[ます]}, lock:[ヒントで置いたおかず], hints, sel, last:{j, cell, k}, done }
+let cur = null;
+function play() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  const i = run.res.length;
+  if (i >= run.list.length) return finish();
+  const it = run.list[i], p = boxOf(it), hard = run.mode === "h";
+  const saved = run.cur && run.cur.i === i ? run.cur : { placed: {}, lock: [], hints: 0 };
+  cur = { i, date: run.date, id: run.id, it, p, placed: valid(p, saved.placed) ? JSON.parse(JSON.stringify(saved.placed)) : {}, lock: (saved.lock || []).slice(), hints: saved.hints || 0, sel: null, last: null, done: false };
+  { const f = p.tray.find((t) => !(t.id in cur.placed)); cur.sel = f ? f.id : null; } // はじめは残りのおかずの先頭を選んでおく
+  const label = run.mode === "h" ? "上級・特盛" : run.mode === "p" ? `練習・${p.size}` : `${p.size}の箱`;
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="もどる">←</button>
+      <div class="dots" aria-label="${i + 1}箱目／${run.list.length}箱">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
+      <span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}/${run.list.length}</span></header>
+    <div id="bx"></div>
+    <div class="status"><span id="left"></span>${hard ? "<span>ヒントなし</span>" : `<button class="sub" id="hint" style="min-height:44px;padding:0 14px">ヒント</button>`}</div>
+    <div class="tray" id="tray"></div>
+    <div class="row"><button class="sub" id="clear">全部もどす</button></div>
+    <div id="after"></div>
+    ${!s.tut || (s.boxes === 0 && i === 0) ? `<p class="note">おかずを押して選び、箱のますを押して詰めます。同じますをもう一度押すと向きが変わります。</p>` : ""}`;
+  $("back").onclick = home;
+  $("clear").onclick = clearAll;
+  if ($("hint")) $("hint").onclick = hint;
+  paint();
+  window.scrollTo(0, 0);
+}
+// 保存してあった置き方が、この箱で正しい形か（古い保存や壊れた保存を使わない）
+function valid(p, placed) {
+  if (!placed || typeof placed !== "object") return false;
+  const used = new Set();
+  for (const j in placed) { const t = p.tray[+j], cs = placed[j]; if (!t || !Array.isArray(cs) || cs.length !== t.cells.length) return false; for (const c of cs) { if (used.has(c) || p.blocks.includes(c) || c < 0 || c >= p.w * p.h) return false; used.add(c); } if (!B.rotations(t.cells).map(B.key).includes(B.key(B.norm(cs.map((c) => [c % p.w, Math.floor(c / p.w)]))))) return false; }
+  return true;
+}
+const same = (r) => r && cur && r.date === cur.date && r.id === cur.id && r.res.length === cur.i;
+function keep() { save((s) => { const r = s.runs[MODE]; if (same(r)) r.cur = { i: cur.i, placed: cur.placed, lock: cur.lock, hints: cur.hints }; }); }
+function paint() {
+  const p = cur.p, own = ownOf(p, cur.placed);
+  $("bx").innerHTML = boxHtml(p, own, { lock: cur.lock, win: cur.done });
+  document.querySelectorAll("#bx .cell[data-i]").forEach((b) => (b.onclick = () => tapCell(+b.dataset.i)));
+  $("tray").innerHTML = p.tray.map((t) => {
+    const W = Math.max(...t.cells.map((c) => c[0])) + 1, H = Math.max(...t.cells.map((c) => c[1])) + 1, set = new Set(t.cells.map((c) => c.join(",")));
+    const cells = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const on = set.has(x + "," + y), first = t.cells[0][0] === x && t.cells[0][1] === y; cells.push(`<i class="${on ? "on" : ""}">${on && first ? t.food[1] : ""}</i>`); }
+    return `<button class="pc${cur.sel === t.id ? " sel" : ""}${t.id in cur.placed ? " used" : ""}" data-j="${t.id}" style="--c:${t.food[2]};grid-template-columns:repeat(${W},auto)" aria-label="${t.food[0]}${t.id in cur.placed ? "（詰めた）" : ""}" aria-pressed="${cur.sel === t.id}">${cells.join("")}</button>`;
+  }).join("");
+  document.querySelectorAll(".pc").forEach((b) => (b.onclick = () => tapPiece(+b.dataset.j)));
+  const left = p.tray.length - Object.keys(cur.placed).length;
+  $("left").textContent = cur.done ? "" : `のこり ${left}品${cur.hints ? `・ヒント ${cur.hints}` : ""}`;
+  $("clear").disabled = cur.done || Object.keys(cur.placed).every((j) => cur.lock.includes(+j));
+  if ($("hint")) $("hint").disabled = cur.done || cur.hints >= 2;
+}
+function tapPiece(j) {
+  if (cur.done) return;
+  if (j in cur.placed) { if (cur.lock.includes(j)) return toast("ヒントで詰めたおかずは動かせません"); delete cur.placed[j]; keep(); }
+  cur.sel = cur.sel === j ? null : j; cur.last = null; paint();
+}
+// ます i を通る置き方を全部さがす（台の向きを先に、押したますがおかずのまん中に近い順）
+function placements(p, t, i, own) {
+  const out = [], x0 = i % p.w, y0 = Math.floor(i / p.w);
+  B.rotations(t.cells).forEach((r, ri) => {
+    const cx = r.reduce((a, c) => a + c[0], 0) / r.length, cy = r.reduce((a, c) => a + c[1], 0) / r.length;
+    for (const [ax, ay] of r) {
+      const cs = []; let ok = true;
+      for (const [x, y] of r) { const X = x - ax + x0, Y = y - ay + y0, c = Y * p.w + X; if (X < 0 || Y < 0 || X >= p.w || Y >= p.h || p.blocks.includes(c) || (own[c] >= 0 && own[c] !== t.id)) { ok = false; break; } cs.push(c); }
+      if (ok) out.push({ cs, d: ri * 100 + Math.hypot(ax - cx, ay - cy) });
+    }
+  });
+  return out.sort((a, b) => a.d - b.d).map((o) => o.cs);
+}
+function tapCell(i) {
+  if (cur.done) return;
+  const p = cur.p, own = ownOf(p, cur.placed), j0 = own[i];
+  // 直前に詰めたおかずの同じますをもう一度押した：次の向き・場所へ
+  if (j0 >= 0 && cur.last && cur.last.j === j0 && cur.last.cell === i) {
+    const t = p.tray[j0], cand = placements(p, t, i, own);
+    if (cand.length > 1) { cur.last.k = (cur.last.k + 1) % cand.length; cur.placed[j0] = cand[cur.last.k]; buzz(); keep(); paint(); return; }
+  }
+  if (j0 >= 0) { // 詰めたおかずを押した：台に戻して選んだ状態に
+    if (cur.lock.includes(j0)) return toast("ヒントで詰めたおかずは動かせません");
+    delete cur.placed[j0]; cur.sel = j0; cur.last = null; keep(); paint(); return;
+  }
+  if (cur.sel == null) { const free = p.tray.find((t) => !(t.id in cur.placed)); toast(free ? "先に下のおかずを押して選んでください" : "箱にすき間が残っています"); return; }
+  const t = p.tray[cur.sel], cand = placements(p, t, i, own);
+  if (!cand.length) { toast("ここには入りません"); buzz(30); return; }
+  cur.placed[t.id] = cand[0]; cur.last = { j: t.id, cell: i, k: 0 };
+  // 次のおかずを自動で選ぶ
+  const next = p.tray.find((x) => !(x.id in cur.placed)); cur.sel = next ? next.id : null;
+  buzz(); keep(); paint(); check();
+}
+function clearAll() { if (cur.done) return; for (const j of Object.keys(cur.placed)) if (!cur.lock.includes(+j)) delete cur.placed[j]; cur.sel = null; cur.last = null; keep(); paint(); }
+// ヒント：まだ答えの場所にないおかずを1つ、答えの場所に詰める（重なるおかずは台に戻す）
+function hint() {
+  if (cur.done || cur.hints >= 2) return;
+  const p = cur.p, t = p.tray.find((x) => !cur.lock.includes(x.id) && JSON.stringify((cur.placed[x.id] || []).slice().sort((a, b) => a - b)) !== JSON.stringify(x.sol.slice().sort((a, b) => a - b)));
+  if (!t) return;
+  for (const j of Object.keys(cur.placed)) if (+j !== t.id && cur.placed[j].some((c) => t.sol.includes(c))) delete cur.placed[j];
+  cur.placed[t.id] = t.sol.slice(); cur.lock.push(t.id); cur.hints++; cur.sel = null; cur.last = null;
+  keep(); paint(); toast(`${t.food[0]}の場所を教えました`); check();
+}
+function check() {
+  const p = cur.p, own = ownOf(p, cur.placed);
+  for (let i = 0; i < own.length; i++) if (own[i] < 0 && !p.blocks.includes(i)) return;
+  if (!same(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
+  cur.done = true; buzz([10, 40, 10]);
+  const st = starsOf(cur.hints);
+  const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints }); r.cur = null; s.boxes++; for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
+  paint();
+  const r = s.runs[MODE], fin = r && r.res.length >= r.list.length;
+  $("after").innerHTML = `<div class="verdict" role="status">
+    <div class="hd">できあがり！ ${starStr(st)}</div>
+    <p class="note">${p.tray.map((t) => t.food[1]).join("")}<br>${p.ways <= 1 ? "詰め方が1通りしかない箱でした。" : `この箱の詰め方は全部で${p.ways >= 300 ? "300通り以上" : p.ways + "通り"}。`}</p>
+    <button class="main" id="next">${fin ? "結果を見る" : "次の箱へ"}</button></div>`;
+  $("next").onclick = play;
+  setTimeout(() => { if ($("next") && cur.done) $("next").scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 60);
+}
+
+function finish() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  let first = false;
+  const rec = { h: run.res.map((r) => r.h) };
+  save((s2) => {
+    if (run.mode === "d" && !s2.days[run.date]) { s2.days[run.date] = rec; first = true; }
+    if (run.mode === "h" && !s2.hdays[run.date]) { s2.hdays[run.date] = rec; first = true; }
+    s2.runs[MODE] = null;
+  });
+  if (run.mode === "p") return result("p", run.date, false, { list: run.list, ...rec });
+  result(run.mode, run.date, first);
+}
+// 共有の文：箱の形・答えは出さない。ヒントの数だけ色を変える
+const sq = (h) => (h === 0 ? "🍱" : h === 1 ? "🟨" : "🟧");
+function shareText(mode, k, rec) {
+  return `お弁当づめ${mode === "h" ? " 特盛" : ""} #${dayNo(k)} ${md(k)}\n${rec.h.map(sq).join("")}${rec.h.every((h) => h === 0) ? " ヒントなしで完成" : ""}`;
+}
+function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
+function result(mode, k, first, prec) {
+  const s = load();
+  const list = mode === "p" ? prec.list : mode === "d" ? dailyList(k) : hardList(k);
+  const rec = mode === "p" ? prec : (mode === "d" ? s.days : s.hdays)[k];
+  if (!rec) return home();
+  const total = rec.h.reduce((a, b) => a + b, 0), text = shareText(mode, k, rec);
+  const showKofi = first && mode !== "p" && total === 0 && !s.kofi[k + mode];
+  if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>お弁当づめ<small>${mode === "d" ? `今日の3箱 #${dayNo(k)}` : mode === "h" ? "上級：特盛" : "練習"}</small></h1><span></span></header>
+    <p class="big">${total === 0 ? "ヒントなしで完成！" : `${list.length}箱 完成（ヒント ${total}）`}</p>
+    <div class="minis">${list.map((it, j) => { const p = boxOf(it); return `<div>${boxHtml(p, solOwn(p), { mini: true })}<p>${p.size} ${starStr(starsOf(rec.h[j]))}</p></div>`; }).join("")}</div>
+    ${mode !== "p" ? `<div class="share">${esc(text)}</div>
+    <button class="main" id="share">結果をシェア</button>
+    <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
+    <p class="note">🍱ヒントなし　🟨ヒント1回　🟧ヒント2回<br>次の3箱まで あと <b>${untilNext()}</b></p>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：特盛の2箱に挑む</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑を見る</button></div>
+    ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
+    <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
+  $("back").onclick = home;
+  $("go-p").onclick = practiceMenu;
+  $("go-dex").onclick = dex;
+  if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
+  if (mode !== "p") {
+    const withUrl = text + "\n" + SITE;
+    $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
+    $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
+    const copy = (t) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("コピーしました"), () => toast("コピーできませんでした")); };
+    $("copy").onclick = () => copy(withUrl);
+    $("share").onclick = () => { if (navigator.share) navigator.share({ text: withUrl }).catch(() => {}); else copy(withUrl); };
+  }
+}
+
+function dex() {
+  const s = load(), got = B.FOODS.filter((f) => s.eat[f[0]]).length;
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>おかず図鑑<small>${got}/${B.FOODS.length}品・詰めた箱 ${s.boxes}</small></h1><span></span></header>
+    <p class="note">詰めたおかずが集まります。1つの箱では、形のちがうおかずは必ずちがうおかずになります。</p>
+    <div class="dex">${B.FOODS.map((f) => s.eat[f[0]] ? `<div><b>${f[1]}</b><span><em>${f[0]}</em><br>${s.eat[f[0]]}回 詰めた</span></div>` : `<div class="no"><b>${f[1]}</b><span><em>？？？</em><br>まだ出会っていない</span></div>`).join("")}</div>
+    ${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+}
+
+window.__bz = { mode: () => MODE, B, dailyList, hardList, boxOf, starsOf, todayKey, dayNo, shareText, streak, load, valid, cur: () => cur, play: (m) => { if (m) MODE = m; play(); } };
+home();
+if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
