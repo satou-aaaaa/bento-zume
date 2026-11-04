@@ -16,3 +16,4 @@ node qa/run.mjs         # 検査（CI と同じ）
 ```
 
 感想は [Issue のフォーム](https://github.com/satou-aaaaa/bento-zume/issues/new?template=feedback.yml) からどうぞ。
+応援は [Ko-fi](https://ko-fi.com/satouaaaaa) から（遊ぶのは無料のままです）。
