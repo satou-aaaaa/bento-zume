@@ -39,7 +39,6 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px;min
 h1{font-weight:800;font-size:21px;margin:0;letter-spacing:.04em}
 h1 small{font-size:12px;letter-spacing:0;color:var(--ink2);margin-left:8px;font-weight:500}
 .icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px;background:var(--paper)}
-.icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .dots{display:flex;gap:6px;flex:1;max-width:120px}
 .dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
 .dots i.on{background:var(--red)}.dots i.done{background:var(--ink)}
@@ -59,8 +58,12 @@ button.sub:disabled{opacity:.4;cursor:default}
 .cell.on{background:var(--c);border-width:2px;border-style:solid}
 .cell.cand{outline:2px dashed var(--red);outline-offset:-2px}
 .cell.lock::after{content:"";position:absolute;inset:3px;border:2px solid #ffffffaa;border-radius:4px}
-.cell.flash{animation:pop .4s}
-@keyframes pop{40%{transform:scale(1.12)}}
+.cell.flash{animation:pop .32s ease-out}
+@keyframes pop{0%{transform:scale(.6);filter:brightness(1.35)}60%{transform:scale(1.08)}100%{transform:none}}
+.cell.wave{animation:wave .5s ease-out both}
+@keyframes wave{0%{transform:none}45%{transform:scale(1.14);filter:brightness(1.25)}100%{transform:none}}
+.cell.gap{background:repeating-linear-gradient(45deg,#d2543d22 0 5px,transparent 5px 10px);box-shadow:inset 0 0 0 2px #d2543d88}
+.status .warn{color:var(--red2);font-weight:800}
 .box.win{animation:win .6s}
 @keyframes win{30%{transform:rotate(-2deg) scale(1.03)}60%{transform:rotate(2deg) scale(1.03)}}
 /* おかずの台 */
@@ -93,7 +96,8 @@ button.sub:disabled{opacity:.4;cursor:default}
 .minis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:start}
 .minis .box{padding:5px;border-radius:10px}
 .minis .grid{padding:1px;border-radius:6px}
-.minis .cell{font-size:10px;border-radius:2px}
+.minis>div{min-width:0}
+.minis .cell{font-size:10px;border-radius:2px;min-width:0;overflow:hidden}
 .minis p{margin:4px 0 0;text-align:center;font-size:12px;color:var(--ink2)}
 /* おかず図鑑 */
 .dex{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -111,10 +115,38 @@ dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
 dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:var(--ink2)}
 dialog a{color:var(--red2);min-height:44px;display:inline-flex;align-items:center}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;box-shadow:0 6px 20px #0005;max-width:90%;text-align:center}
+/* 実績・カレンダー */
+.ach-new{background:#fff1cf;color:#6b4300;border:1px solid #d79b2c66;border-radius:12px;padding:8px 10px;font-size:14px;font-weight:800;margin:0;text-align:center}
+.achs{display:flex;flex-direction:column;gap:8px}
+.ach{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.ach .ic{font-size:22px;text-align:center;filter:grayscale(1);opacity:.4}
+.ach.got{border-color:#d79b2c99;background:#fff7e3}.ach.got .ic{filter:none;opacity:1}
+.ach b{display:block;font-size:15px}.ach small{color:var(--ink2);font-size:12px;line-height:1.5}
+.ach .pg{font-size:12px;color:var(--ink2);text-align:right;min-width:48px}
+.ach .pg i{display:block;height:5px;border-radius:3px;background:var(--line);margin-top:4px;overflow:hidden}
+.ach .pg i span{display:block;height:100%;background:var(--gold)}
+.ach.got .pg{color:#9a6a10;font-weight:800}
+.calnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.calnav b{font-size:19px}
+.calnav .icon:disabled{opacity:.3;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .wd{font-size:11px;color:var(--ink2)}
+.cal .d{all:unset;box-sizing:border-box;min-height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:var(--ink2);position:relative;line-height:1.1;min-width:0}
+.cal .d.on{color:#fff;font-weight:800}
+.cal .d.later{border:1.5px dashed var(--wood2);color:var(--ink);background:#c98f5722}
+.cal .d.can{border:1.5px dotted var(--ink2);color:var(--ink);cursor:pointer;background:var(--paper)}
+.cal .d.today{outline:2px solid var(--ink);outline-offset:-2px}
+.cal .d small{font-size:10px}
+.cal .d .h{position:absolute;top:3px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 1.5px #fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--ink2)}
+.misses{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.misses .sub{flex:0 0 auto;min-width:84px}
 footer{margin-top:auto;text-align:center;font-size:12px;color:var(--ink2);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 footer a{color:var(--ink2);min-height:44px;display:inline-flex;align-items:center}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* all:unset のボタン（カレンダーのます目など）でも枠が消えないよう、いちばん最後に強く書く（2026-11-04 CodeRabbit） */
+:is(.icon,button,a):focus-visible{outline:2px solid var(--red)!important;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -154,14 +186,17 @@ const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repe
 
 // ---- 記録（この端末の localStorage だけ）----
 // 進行中の遊びはモードごとに分けて持つ（練習を始めても今日・上級の途中経過を消さない）。eat：おかず → 詰めた数
-const fresh = () => ({ v: 1, days: {}, hdays: {}, eat: {}, boxes: 0, runs: {}, tut: false, kofi: {} });
+const fresh = () => ({ v: 1, days: {}, hdays: {}, pdays: {}, eat: {}, boxes: 0, runs: {}, tut: false, kofi: {}, ach: {} }); // pdays：取りこぼした日をあとから遊んだ結果（連続の日・今日の記録には数えない）。ach：結果の画面で知らせ終えた実績
 let MODE = "d";
 let mem = null; // 保存できない環境では、開いているあいだだけここに置く
 // 保存に失敗したあとはメモリと保存の両方を読む。記録（日ごとの結果・図鑑）は合わせて数は高いほう、途中経過は同じ日・同じ箱なら進んだほう
 const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ h: r.res.map((x) => x.h) });
 // 終わった今日・上級の回を日ごとの記録に入れる（結果を見る前に別のタブが次の日を保存しても、終えた日を失わない）
-function bank(s, r) { const b = doneOf(r) ? (r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
-function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0) * 1000 + (r.cur && r.cur.placed ? Object.keys(r.cur.placed).length : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; }
+const bookOf = (s, m) => (m === "d" ? s.days : m === "h" ? s.hdays : m === "a" ? s.pdays : null); // モードごとの日ごとの記録（練習は無し）
+// あとから遊ぶ回は日付ごとに runs["a:日付"] へ置く（別の日を選んでも、前の日の途中経過を消さない）
+const runKey = (mode, date) => (mode === "a" ? "a:" + date : mode);
+function bank(s, r) { const b = doneOf(r) ? bookOf(s, r.mode) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); a = Object.assign(fresh(), a); b = Object.assign(fresh(), b); /* 合わせる前に両方を fresh() で補う（片方にしか無い新しいキーを失わない） */ const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0) * 1000 + (r.cur && r.cur.placed ? Object.keys(r.cur.placed).length : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = bookOf(s, r.mode); if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; }
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
 function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
 const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
@@ -169,6 +204,31 @@ function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k);
 const RANKS = [[0, "見習い"], [10, "お弁当係"], [40, "詰め名人"], [120, "弁当職人"], [300, "弁当の達人"]];
 const rankOf = (n) => RANKS.filter((r) => n >= r[0]).pop()[1];
 const nextRank = (n) => RANKS.find((r) => r[0] > n);
+// 実績：いまの記録から毎回数える（腕前・集める・続けるをまぜる）。[id, 絵, 名前, 条件, (記録) => [いま, 目標]]
+const DAYRE = /^\d{4}-\d\d-\d\d$/;
+const recs = (b) => Object.entries(b || {}).filter(([k, r]) => DAYRE.test(k) && r && Array.isArray(r.h)).map(([, r]) => r);
+const clean = (b) => recs(b).filter((r) => r.h.length && r.h.every((h) => h === 0)).length; // ヒントなしで終えた日
+const n0 = (s) => [s.days, s.hdays, s.pdays].reduce((t, b) => t + recs(b).reduce((u, r) => u + r.h.filter((h) => h === 0).length, 0), 0); // ヒントなしで詰めた箱（今日・上級・あとから）
+const playDays = (s) => new Set([...Object.keys(s.days), ...Object.keys(s.pdays || {})].filter((k) => DAYRE.test(k))).size; // 遊んだ日（あとから遊んだ日も入れる）
+const nextDay = (k) => new Date(Date.parse(k) + 864e5).toISOString().slice(0, 10);
+function maxStreak(days) { let best = 0; for (const k of Object.keys(days)) { if (!DAYRE.test(k) || days[prevDay(k)]) continue; let n = 0, d = k; while (days[d]) { n++; d = nextDay(d); } best = Math.max(best, n); } return best; }
+const ACH = [
+  ["c1", "🍱", "はじめての★3", "1箱をヒントなしで詰める", (s) => [n0(s), 1]],
+  ["clean", "✨", "ヒントいらず", "今日の3箱を全部ヒントなしで", (s) => [clean(s.days) + clean(s.pdays), 1]],
+  ["c30", "🏅", "★3を30箱", "ヒントなしで30箱詰める", (s) => [n0(s), 30]],
+  ["h1", "🧺", "特盛デビュー", "上級の特盛2箱を詰め切る", (s) => [recs(s.hdays).length, 1]],
+  ["h5", "🍙", "特盛の常連", "上級を5日詰め切る", (s) => [recs(s.hdays).length, 5]],
+  ["e5", "🥚", "おかず5品", "図鑑に5品集める", (s) => [Object.keys(s.eat).length, 5]],
+  ["e9", "🥦", "おかず9品", "図鑑に9品集める", (s) => [Object.keys(s.eat).length, 9]],
+  ["eAll", "📖", "図鑑を全部", `図鑑の${B.FOODS.length}品を全部集める`, (s) => [Object.keys(s.eat).length, B.FOODS.length]],
+  ["d3", "🌱", "3日のお弁当", "3日遊ぶ", (s) => [playDays(s), 3]],
+  ["d10", "🌿", "10日のお弁当", "10日遊ぶ", (s) => [playDays(s), 10]],
+  ["d30", "🌳", "30日のお弁当", "30日遊ぶ", (s) => [playDays(s), 30]],
+  ["st7", "🗓", "7日つづけて", "今日の3箱を7日つづけて", (s) => [maxStreak(s.days), 7]],
+];
+const achOf = (s) => ACH.map(([id, ic, name, cond, f]) => { const [n, g] = f(s); return { id, ic, name, cond, n: Math.min(n, g), g, got: n >= g }; });
+// 取りこぼした日：きのうから7日前までで、今日の3箱を遊んでいない日（始めた日 EPOCH より前は出さない）
+function missed(s, k = todayKey()) { const out = []; let d = k; for (let i = 0; i < 7; i++) { d = prevDay(d); if (d < EPOCH) break; if (!s.days[d] && !(s.pdays || {})[d]) out.push(d); } return out; }
 
 // ---- 画面 ----
 const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;
@@ -190,16 +250,33 @@ function boxHtml(p, own, opt = {}) {
     // 同じおかずのとなりは線を消し、ちがうおかずとの境目に線を引く
     const x = i % p.w, y = Math.floor(i / p.w), edge = (dx, dy) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < p.w && Y < p.h && own[Y * p.w + X] === j ? "var(--c)" : "#3a2a1f99"; };
     const bd = t ? `;border-color:${edge(0, -1)} ${edge(1, 0)} ${edge(0, 1)} ${edge(-1, 0)}` : "";
-    cells.push(`<${tag} class="cell${t ? " on" : ""}${t && opt.lock && opt.lock.includes(j) ? " lock" : ""}" data-i="${i}" ${t ? `style="--c:${t.food[2]}${bd}"` : ""} aria-label="${t ? t.food[0] : "空き"}">${first ? t.food[1] : ""}</${tag}>`);
+    const fx = t && opt.pop === j ? " flash" : t && opt.win ? " wave" : !t && opt.gap && opt.gap.has(i) ? " gap" : "", dl = t && opt.win ? `;animation-delay:${(x + y) * 45}ms` : ""; // 詰めたおかずはぽんと入り、完成すると左上から順に光る。入らないすき間は斜線
+    cells.push(`<${tag} class="cell${t ? " on" : ""}${t && opt.lock && opt.lock.includes(j) ? " lock" : ""}${fx}" data-i="${i}" ${t ? `style="--c:${t.food[2]}${bd}${dl}"` : ""} aria-label="${t ? t.food[0] : !t && opt.gap && opt.gap.has(i) ? "入らないすき間" : "空き"}">${first ? t.food[1] : ""}</${tag}>`);
   }
   return `<div class="box${opt.win ? " win" : ""}"><div class="grid" style="grid-template-columns:repeat(${p.w},1fr)">${cells.join("")}</div></div>`;
 }
 const ownOf = (p, placed) => { const own = new Array(p.w * p.h).fill(-1); for (const j in placed) for (const c of placed[j]) own[c] = +j; return own; };
 const solOwn = (p) => ownOf(p, Object.fromEntries(p.tray.map((t) => [t.id, t.sol])));
+// 入らないすき間：空きのますのかたまりのうち、残りのおかずの大きさをどう足しても、その数にならないもの（答えは教えず、行き詰まりにだけ早く気づける）
+function gapsOf(p, own, sizes) {
+  const N = p.w * p.h, seen = new Set(), out = new Set(), groups = [];
+  const can = new Array(N + 1).fill(false); can[0] = true; for (const z of sizes) for (let v = N; v >= z; v--) if (can[v - z]) can[v] = true;
+  for (let i = 0; i < N; i++) {
+    if (own[i] >= 0 || p.blocks.includes(i) || seen.has(i)) continue;
+    const st = [i], g = [i]; seen.add(i);
+    while (st.length) { const c = st.pop(), x = c % p.w, y = Math.floor(c / p.w); for (const [X, Y] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) { const n = Y * p.w + X; if (X < 0 || Y < 0 || X >= p.w || Y >= p.h || seen.has(n) || own[n] >= 0 || p.blocks.includes(n)) continue; seen.add(n); st.push(n); g.push(n); } }
+    groups.push(g);
+  }
+  // いちばん大きいかたまりには印を付けない（小さいすき間ができたせいで埋まらなくなっただけなので、箱じゅうが斜線にならないように）
+  const big = groups.reduce((a, g) => (g.length > a.length ? g : a), []);
+  const bad = groups.filter((g) => !can[g.length]), mark = bad.filter((g) => g !== big);
+  (mark.length ? mark : bad).forEach((g) => g.forEach((c) => out.add(c))); // 埋まらないのがいちばん大きいかたまりだけなら、それに印を付ける（行き詰まりを見のがさない。2026-11-04 CodeRabbit）
+  return out;
+}
 
 function home() {
   const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
-  for (const m of ["d", "h"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  for (const m of ["d", "h", ...Object.keys(s.runs).filter((x) => x.startsWith("a:"))]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
   const nr = nextRank(s.boxes);
   const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
   const sample = boxOf({ seed: 7, s: 0 });
@@ -211,6 +288,7 @@ function home() {
     <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${B.SIZES[rd.res.length] ? B.SIZES[rd.res.length].name : ""}の箱）` : `今日の3箱を詰める <small>#${dayNo(k)}</small>`}</button>
     ${done ? `<button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：特盛の2箱（仕切りあり・ヒントなし）"}</button>` : ""}
     <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">おかず図鑑 ${Object.keys(s.eat).length}/${B.FOODS.length}</button></div>
+    <div class="row"><button class="sub" id="go-cal">カレンダー${missed(s, k).length ? ` <small style="color:var(--red2)">↺${missed(s, k).length}</small>` : ""}</button><button class="sub" id="go-ach">実績 ${achOf(s).filter((a) => a.got).length}/${ACH.length}</button></div>
     <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>遊んだ日</small></div><div><b>${s.boxes}</b><small>詰めた箱</small></div></div>
     <p class="rank">称号：${rankOf(s.boxes)}${nr ? `（あと${nr[0] - s.boxes}箱で${nr[1]}）` : ""}</p>
     ${footer()}`;
@@ -218,6 +296,8 @@ function home() {
   if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
   $("go-p").onclick = practiceMenu;
   $("go-dex").onclick = dex;
+  $("go-cal").onclick = () => calendar();
+  $("go-ach").onclick = achView;
   bindFooter();
   if (!s.tut) openHow();
 }
@@ -230,16 +310,22 @@ function practiceMenu() {
   bindFooter();
 }
 function startRun(mode, opt) {
-  const k = todayKey();
+  const k = mode === "a" ? opt : todayKey(), rk = runKey(mode, k); // a：取りこぼした日をあとから（opt はその日付）
+  const live = (s) => s.runs[rk] && s.runs[rk].date === k && !doneOf(s.runs[rk]);
+  if (mode === "a" && !live(load()) && !missed(load()).includes(k)) return calendar(); // 7日より前・遊んだ日・今日や未来の日は始めない
   save((s) => {
-    if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
+    if (mode !== "p" && s.runs[rk] && s.runs[rk].date === k) return; // 続きから
     if ((mode === "d" && s.days[k]) || (mode === "h" && s.hdays[k])) return; // 別のタブで今日の分を終えていたら、もう一度は始めない（ホームに戻る）
-    const list = mode === "d" ? dailyList(k) : mode === "h" ? hardList(k) : [{ seed: Math.floor(Math.random() * 2 ** 31), s: opt }];
-    s.runs[mode] = { mode, date: k, list, res: [], cur: null, id: Date.now().toString(36) };
+    if (mode === "a" && (s.days[k] || s.pdays[k])) return; // あとから：別のタブでその日を終えていたら始めない
+    if (mode === "a") for (const x of Object.keys(s.runs)) if (x.startsWith("a:") && x.slice(2) < missedFloor() && (!s.runs[x] || doneOf(s.runs[x]))) { bank(s, s.runs[x]); delete s.runs[x]; } // 7日より前の、終えたあとの印だけ片づける
+    const list = mode === "d" || mode === "a" ? dailyList(k) : mode === "h" ? hardList(k) : [{ seed: Math.floor(Math.random() * 2 ** 31), s: opt }]; // あとからも、その日付の種で今日の3箱と同じ3箱
+    s.runs[rk] = { mode, date: k, list, res: [], cur: null, id: Date.now().toString(36) };
   });
-  MODE = mode;
+  MODE = rk;
+  if (mode === "a" && !live(load())) return calendar();
   play();
 }
+const missedFloor = () => { let d = todayKey(); for (let i = 0; i < 8; i++) d = prevDay(d); return d; };
 
 // 今の箱：{ i, date, id, p, placed:{おかず:[ます]}, lock:[ヒントで置いたおかず], hints, sel, last:{j, cell, k}, done }
 let cur = null;
@@ -253,7 +339,7 @@ function play() {
   const saved = run.cur && run.cur.i === i ? run.cur : { placed: {}, lock: [], hints: 0 };
   cur = { i, date: run.date, id: run.id, it, p, placed: valid(p, saved.placed) ? JSON.parse(JSON.stringify(saved.placed)) : {}, lock: (saved.lock || []).slice(), hints: saved.hints || 0, sel: null, last: null, done: false };
   { const f = p.tray.find((t) => !(t.id in cur.placed)); cur.sel = f ? f.id : null; } // はじめは残りのおかずの先頭を選んでおく
-  const label = run.mode === "h" ? "上級・特盛" : run.mode === "p" ? `練習・${p.size}` : `${p.size}の箱`;
+  const label = run.mode === "h" ? "上級・特盛" : run.mode === "p" ? `練習・${p.size}` : run.mode === "a" ? `${md(run.date)}・${p.size}` : `${p.size}の箱`;
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="もどる">←</button>
       <div class="dots" aria-label="${i + 1}箱目／${run.list.length}箱">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
@@ -280,8 +366,9 @@ function valid(p, placed) {
 const same = (r) => r && cur && r.date === cur.date && r.id === cur.id && r.res.length === cur.i;
 function keep() { save((s) => { const r = s.runs[MODE]; if (same(r)) r.cur = { i: cur.i, placed: cur.placed, lock: cur.lock, hints: cur.hints }; }); }
 function paint() {
-  const p = cur.p, own = ownOf(p, cur.placed);
-  $("bx").innerHTML = boxHtml(p, own, { lock: cur.lock, win: cur.done });
+  const p = cur.p, own = ownOf(p, cur.placed), gap = cur.done ? new Set() : gapsOf(p, own, p.tray.filter((t) => !(t.id in cur.placed)).map((t) => t.cells.length));
+  $("bx").innerHTML = boxHtml(p, own, { lock: cur.lock, win: cur.done, pop: cur.done ? null : cur.pop, gap });
+  cur.pop = null;
   document.querySelectorAll("#bx .cell[data-i]").forEach((b) => (b.onclick = () => tapCell(+b.dataset.i)));
   $("tray").innerHTML = p.tray.map((t) => {
     const W = Math.max(...t.cells.map((c) => c[0])) + 1, H = Math.max(...t.cells.map((c) => c[1])) + 1, set = new Set(t.cells.map((c) => c.join(",")));
@@ -290,7 +377,7 @@ function paint() {
   }).join("");
   document.querySelectorAll(".pc").forEach((b) => (b.onclick = () => tapPiece(+b.dataset.j)));
   const left = p.tray.length - Object.keys(cur.placed).length;
-  $("left").textContent = cur.done ? "" : `のこり ${left}品${cur.hints ? `・ヒント ${cur.hints}` : ""}`;
+  $("left").innerHTML = cur.done ? "" : gap.size ? `<span class="warn">入らないすき間があります</span>` : `のこり ${left}品${cur.hints ? `・ヒント ${cur.hints}` : ""}`;
   $("clear").disabled = cur.done || Object.keys(cur.placed).every((j) => cur.lock.includes(+j));
   if ($("hint")) $("hint").disabled = cur.done || cur.hints >= 2;
 }
@@ -318,7 +405,7 @@ function tapCell(i) {
   // 直前に詰めたおかずの同じますをもう一度押した：次の向き・場所へ
   if (j0 >= 0 && cur.last && cur.last.j === j0 && cur.last.cell === i) {
     const t = p.tray[j0], cand = placements(p, t, i, own);
-    if (cand.length > 1) { cur.last.k = (cur.last.k + 1) % cand.length; cur.placed[j0] = cand[cur.last.k]; buzz(); keep(); paint(); return; }
+    if (cand.length > 1) { cur.last.k = (cur.last.k + 1) % cand.length; cur.placed[j0] = cand[cur.last.k]; cur.pop = j0; buzz(); keep(); paint(); return; }
   }
   if (j0 >= 0) { // 詰めたおかずを押した：台に戻して選んだ状態に
     if (cur.lock.includes(j0)) return toast("ヒントで詰めたおかずは動かせません");
@@ -327,7 +414,7 @@ function tapCell(i) {
   if (cur.sel == null) { const free = p.tray.find((t) => !(t.id in cur.placed)); toast(free ? "先に下のおかずを押して選んでください" : "箱にすき間が残っています"); return; }
   const t = p.tray[cur.sel], cand = placements(p, t, i, own);
   if (!cand.length) { toast("ここには入りません"); buzz(30); return; }
-  cur.placed[t.id] = cand[0]; cur.last = { j: t.id, cell: i, k: 0 };
+  cur.placed[t.id] = cand[0]; cur.last = { j: t.id, cell: i, k: 0 }; cur.pop = t.id;
   // 次のおかずを自動で選ぶ
   const next = p.tray.find((x) => !(x.id in cur.placed)); cur.sel = next ? next.id : null;
   buzz(); keep(); paint(); check();
@@ -339,7 +426,7 @@ function hint() {
   const p = cur.p, t = p.tray.find((x) => !cur.lock.includes(x.id) && JSON.stringify((cur.placed[x.id] || []).slice().sort((a, b) => a - b)) !== JSON.stringify(x.sol.slice().sort((a, b) => a - b)));
   if (!t) return;
   for (const j of Object.keys(cur.placed)) if (+j !== t.id && cur.placed[j].some((c) => t.sol.includes(c))) delete cur.placed[j];
-  cur.placed[t.id] = t.sol.slice(); cur.lock.push(t.id); cur.hints++; cur.sel = null; cur.last = null;
+  cur.placed[t.id] = t.sol.slice(); cur.lock.push(t.id); cur.hints++; cur.sel = null; cur.last = null; cur.pop = t.id;
   keep(); paint(); toast(`${t.food[0]}の場所を教えました`); check();
 }
 function check() {
@@ -380,21 +467,25 @@ function shareText(mode, k, rec) {
 function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
 function result(mode, k, first, prec) {
   const s = load();
-  const list = mode === "p" ? prec.list : mode === "d" ? dailyList(k) : hardList(k);
-  const rec = mode === "p" ? prec : (mode === "d" ? s.days : s.hdays)[k];
+  const list = mode === "p" ? prec.list : mode === "h" ? hardList(k) : dailyList(k);
+  const rec = mode === "p" ? prec : bookOf(s, mode)[k];
   if (!rec) return home();
-  const total = rec.h.reduce((a, b) => a + b, 0), text = shareText(mode, k, rec);
-  const showKofi = first && mode !== "p" && total === 0 && !s.kofi[k + mode];
+  const total = rec.h.reduce((a, b) => a + b, 0), text = shareText(mode, k, rec), share = mode === "d" || mode === "h"; // 練習・あとからはシェアしない
+  const showKofi = first && share && total === 0 && !s.kofi[k + mode];
   if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  const got = achOf(s).filter((a) => a.got && !s.ach[a.id]); // 新しく取れた実績は、結果の画面で1度だけ小さく知らせる
+  if (got.length) save((s2) => { for (const a of got) s2.ach[a.id] = 1; });
   app.innerHTML = `
-    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>お弁当づめ<small>${mode === "d" ? `今日の3箱 #${dayNo(k)}` : mode === "h" ? "上級：特盛" : "練習"}</small></h1><span></span></header>
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>お弁当づめ<small>${mode === "d" ? `今日の3箱 #${dayNo(k)}` : mode === "h" ? "上級：特盛" : mode === "a" ? `${md(k)}・あとから` : "練習"}</small></h1><span></span></header>
     <p class="big">${total === 0 ? "ヒントなしで完成！" : `${list.length}箱 完成（ヒント ${total}）`}</p>
     <div class="minis">${list.map((it, j) => { const p = boxOf(it); return `<div>${boxHtml(p, solOwn(p), { mini: true })}<p>${p.size} ${starStr(starsOf(rec.h[j]))}</p></div>`; }).join("")}</div>
-    ${mode !== "p" ? `<div class="share">${esc(text)}</div>
+    ${got.length ? `<p class="ach-new">🏅 実績：${esc(got.length > 2 ? `${got[0].name} ほか${got.length - 1}つ` : got.map((a) => a.name).join("・"))}</p>` : ""}
+    ${share ? `<div class="share">${esc(text)}</div>
     <button class="main" id="share">結果をシェア</button>
     <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
     <p class="note">🍱ヒントなし　🟨ヒント1回　🟧ヒント2回<br>次の3箱まで あと <b>${untilNext()}</b></p>` : ""}
     ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：特盛の2箱に挑む</button>` : ""}
+    ${mode === "a" ? `<p class="note">あとから遊んだ日は、カレンダーに点線の印で残ります（連続の日には入りません）。</p><button class="main alt" id="go-cal">カレンダーへ</button>` : ""}
     <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑を見る</button></div>
     ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
     <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
@@ -402,7 +493,8 @@ function result(mode, k, first, prec) {
   $("go-p").onclick = practiceMenu;
   $("go-dex").onclick = dex;
   if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
-  if (mode !== "p") {
+  if ($("go-cal")) $("go-cal").onclick = () => calendar();
+  if (share) {
     const withUrl = text + "\n" + SITE;
     $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
     $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
@@ -423,7 +515,47 @@ function dex() {
   bindFooter();
 }
 
-window.__bz = { mode: () => MODE, B, dailyList, hardList, boxOf, starsOf, todayKey, dayNo, shareText, streak, load, valid, cur: () => cur, play: (m) => { if (m) MODE = m; play(); } };
+function achView() {
+  const s = load(), list = achOf(s);
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>実績<small>${list.filter((a) => a.got).length}/${ACH.length}</small></h1><span></span></header>
+    <div class="achs">${list.map((a) => `<div class="ach${a.got ? " got" : ""}"><span class="ic" aria-hidden="true">${a.ic}</span><div><b>${a.name}</b><small>${a.cond}</small></div><div class="pg">${a.got ? "達成" : `${a.n}/${a.g}<i><span style="width:${(a.n / a.g * 100).toFixed(0)}%"></span></i>`}</div></div>`).join("")}</div>${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+  window.scrollTo(0, 0);
+}
+// 遊んだ日のカレンダー：今日の3箱の★の合計で色の濃さ・上級は小さな点・あとから遊んだ日は点線・遊べる取りこぼした日は ↺
+function calendar(ym) {
+  const s = load(), k = todayKey(), first = EPOCH.slice(0, 7), last = k.slice(0, 7);
+  ym = ym && ym >= first && ym <= last ? ym : last;
+  const [y, m] = ym.split("-").map(Number), d0 = new Date(Date.UTC(y, m - 1, 1)), nd = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const miss = missed(s, k), st = streak(s.days), sum = (r) => r.h.reduce((t, h) => t + starsOf(h), 0);
+  const prevYm = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 7), nextYm = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+  let cells = "";
+  for (let i = 0; i < d0.getUTCDay(); i++) cells += "<span></span>";
+  for (let d = 1; d <= nd; d++) {
+    const key = `${ym}-${String(d).padStart(2, "0")}`, r = s.days[key], a = s.pdays[key], h = s.hdays[key] ? `<i class="h" aria-hidden="true"></i>` : "", td = key === k ? " today" : "";
+    if (r && Array.isArray(r.h)) { const n = sum(r), f = n / (r.h.length * 3); cells += `<span class="d on${td}" data-k="${key}" style="background:rgba(210,84,61,${(0.35 + 0.65 * f).toFixed(2)})${f < 0.7 ? ";color:var(--ink)" : ""}" aria-label="${m}月${d}日 ★${n}">${d}<small>★${n}</small>${h}</span>`; }
+    else if (a && Array.isArray(a.h)) cells += `<span class="d later${td}" data-k="${key}" aria-label="${m}月${d}日 あとから ★${sum(a)}">${d}<small>★${sum(a)}</small>${h}</span>`;
+    else if (miss.includes(key)) cells += `<button class="d can" data-k="${key}" aria-label="${m}月${d}日をあとから遊ぶ">${d}<small>↺</small></button>`;
+    else cells += `<span class="d${td}">${d}${h}</span>`;
+  }
+  const live = (d) => { const r = s.runs["a:" + d]; return r && !doneOf(r) && (r.res.length || r.cur); };
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>カレンダー</h1><span></span></header>
+    <div class="calnav"><button class="icon" id="cal-prev" aria-label="前の月"${ym <= first ? " disabled" : ""}>‹</button><b>${y}年${m}月</b><button class="icon" id="cal-next" aria-label="次の月"${ym >= last ? " disabled" : ""}>›</button></div>
+    ${st >= 1 ? `<p class="note" id="cal-st">${st}日つづけて詰めています</p>` : ""}
+    <div class="cal">${"日月火水木金土".split("").map((w) => `<span class="wd">${w}</span>`).join("")}${cells}</div>
+    <div class="legend"><span>■ 今日の3箱（濃いほど★が多い）</span><span>⬚ あとから</span><span>● 上級</span></div>
+    ${miss.length ? `<p class="note">↺ 取りこぼした日の3箱を、あとから遊べます（連続の日には入りません）</p><div class="misses">${miss.map((d) => `<button class="sub" data-k="${d}">${md(d)}${live(d) ? " 続き" : ""}</button>`).join("")}</div>` : ""}
+    ${footer()}`;
+  $("back").onclick = home;
+  if (ym > first) $("cal-prev").onclick = () => calendar(prevYm);
+  if (ym < last) $("cal-next").onclick = () => calendar(nextYm);
+  document.querySelectorAll(".cal button.d, .misses button").forEach((b) => (b.onclick = () => startRun("a", b.dataset.k)));
+  bindFooter();
+  window.scrollTo(0, 0);
+}
+
+window.__bz = { ACH, achOf, missed, maxStreak, gapsOf, ownOf, calendar, achView, startRun, paint: () => paint(), mode: () => MODE, B, dailyList, hardList, boxOf, starsOf, todayKey, dayNo, shareText, streak, load, valid, cur: () => cur, play: (m) => { if (m) MODE = m; play(); } };
 home();
 if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>

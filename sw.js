@@ -1,7 +1,7 @@
 // お弁当づめを端末に保存して、電波が無くても遊べるようにする（PWA）。
 // 画面は先にネットを見て、つながらないときだけ保存したものを使う（直した版がすぐ届く）。
 // 記録（localStorage）には触らない。外へ何も送らない（よそのサイト＝文字の取り寄せは扱わない）。
-const CACHE = "bento-v2";
+const CACHE = "bento-v3";
 const SHELL = ["./", "./index.html", "./gen.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
