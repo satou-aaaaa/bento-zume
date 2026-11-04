@@ -77,7 +77,8 @@
   // 種から1箱。候補を何個か作り、詰め方の少ない（考えがいのある）ものを選ぶ。おかずの並びも種で混ぜる
   function make(seed, S) {
     const R = rng(seed); let best = null;
-    for (let k = 0; k < 4; k++) { const p = carve(R, S); if (!p) continue; p.ways = count(p, 300); if (!best || p.ways < best.ways) best = p; }
+    for (let a = 0; a < 10 && !best; a++) for (let k = 0; k < 4; k++) { const p = carve(R, S); if (!p) continue; p.ways = count(p, 300); if (!best || p.ways < best.ways) best = p; } // 4回とも切り分けに失敗したときだけ、4回ずつやり直す（最初の4回で作れる種は、今までと同じ箱）
+    if (!best) return null;
     const order = best.shapes.map((_, i) => i); for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     // 出すときの向きも種で回す（答えの向きのまま並べない）
     const turns = order.map(() => Math.floor(R() * 4));
