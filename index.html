@@ -214,7 +214,7 @@ function home() {
     <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>遊んだ日</small></div><div><b>${s.boxes}</b><small>詰めた箱</small></div></div>
     <p class="rank">称号：${rankOf(s.boxes)}${nr ? `（あと${nr[0] - s.boxes}箱で${nr[1]}）` : ""}</p>
     ${footer()}`;
-  $("go-d").onclick = () => (done ? result("d", k) : startRun("d"));
+  $("go-d").onclick = () => (k !== todayKey() ? home() : done ? result("d", k) : startRun("d")); // 画面を開いたまま0時を過ぎたら、今日の状態に描き直す
   if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
   $("go-p").onclick = practiceMenu;
   $("go-dex").onclick = dex;
@@ -248,6 +248,7 @@ function play() {
   const i = run.res.length;
   if (i >= run.list.length) return finish();
   const it = run.list[i], p = boxOf(it), hard = run.mode === "h";
+  if (!p) { toast("箱を作れませんでした"); return home(); }
   const saved = run.cur && run.cur.i === i ? run.cur : { placed: {}, lock: [], hints: 0 };
   cur = { i, date: run.date, id: run.id, it, p, placed: valid(p, saved.placed) ? JSON.parse(JSON.stringify(saved.placed)) : {}, lock: (saved.lock || []).slice(), hints: saved.hints || 0, sel: null, last: null, done: false };
   { const f = p.tray.find((t) => !(t.id in cur.placed)); cur.sel = f ? f.id : null; } // はじめは残りのおかずの先頭を選んでおく
@@ -364,7 +365,8 @@ function finish() {
   const rec = { h: run.res.map((r) => r.h) };
   save((s2) => {
     first = bank(s2, run);
-    s2.runs[MODE] = null;
+    // 別のタブで同じモードの新しい回が始まっていたら、それは消さない
+    const c = s2.runs[MODE]; if (c && c.date === run.date && c.id === run.id) s2.runs[MODE] = null;
   });
   if (run.mode === "p") return result("p", run.date, false, { list: run.list, ...rec });
   result(run.mode, run.date, first);
