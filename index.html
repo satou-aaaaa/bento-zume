@@ -268,7 +268,8 @@ function gapsOf(p, own, sizes) {
   }
   // いちばん大きいかたまりには印を付けない（小さいすき間ができたせいで埋まらなくなっただけなので、箱じゅうが斜線にならないように）
   const big = groups.reduce((a, g) => (g.length > a.length ? g : a), []);
-  for (const g of groups) if (g !== big && !can[g.length]) g.forEach((c) => out.add(c));
+  const bad = groups.filter((g) => !can[g.length]), mark = bad.filter((g) => g !== big);
+  (mark.length ? mark : bad).forEach((g) => g.forEach((c) => out.add(c))); // 埋まらないのがいちばん大きいかたまりだけなら、それに印を付ける（行き詰まりを見のがさない。2026-11-04 CodeRabbit）
   return out;
 }
 

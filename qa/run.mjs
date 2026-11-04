@@ -265,10 +265,12 @@ try {
       });
       const p = B.make(1, B.SIZES[0]), own = new Array(16).fill(0); own[0] = -1; own[14] = -1; own[15] = -1; // 左上の1ますと右下の2ますが空き・残りは2ます2つ
       const one = g.gapsOf(p, own, [2, 2]), ok2 = g.gapsOf(p, Object.assign(new Array(16).fill(0), { 0: -1, 1: -1 }), [2]);
-      return { bad: bad.slice(0, 3), nb: bad.length, n, one: [...one], ok2: ok2.size };
+      const own3 = new Array(16).fill(0); own3[0] = own3[1] = own3[2] = -1; const only = g.gapsOf(p, own3, [2]); // 空きは3ますのかたまり1つだけ・残りは2ます1つ
+      return { bad: bad.slice(0, 3), nb: bad.length, n, one: [...one], ok2: ok2.size, only: [...only].sort((a, b) => a - b).join() };
     });
     check("答えどおりに途中まで詰めているときは、すき間の印を出さない（4つの大きさ×300箱の全部の途中）", r.nb === 0 && r.n > 3000, r.bad.join(","));
     check("どのおかずの大きさを足しても埋まらない空きのかたまりだけに、すき間の印が付く（いちばん大きいかたまりには付けない）", r.one.join() === "0" && r.ok2 === 0);
+    check("埋まらない空きが、いちばん大きいかたまり1つだけのときも、すき間の印を付ける", r.only === "0,1,2", r.only);
     await pg.click("#howto-ok"); // 特盛（おかずは4〜5ます）の練習の箱で、1品目を隅からずらして置く
     await pg.evaluate((k) => { const g = window.__bz; localStorage.setItem(k, JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, eat: {}, boxes: 0, kofi: {}, runs: { p: { mode: "p", date: g.todayKey(), list: [{ seed: 5, s: 3 }], res: [], cur: null, id: "qa" } } })); g.play("p"); }, KEY);
     check("はじめ（何も詰めていない箱）には、すき間の印が出ない", (await pg.locator("#bx .cell.gap").count()) === 0 && (await pg.textContent("#left")).includes("のこり"));
