@@ -419,9 +419,75 @@ try {
   try { // 引き継ぎコード（別の端末へ記録を移す。shared-workflows template/qa/transfer-check.mjs）
     await checkTransfer({ browser, url, game: "bento-zume", sample: { "bento-v1": JSON.stringify({ v: 1, tut: true }) }, check, open: async (p) => { await p.click("#howto-ok", { timeout: 1500 }).catch(() => {}); } });
   } catch (e) { check("引き継ぎコード", false, e.message.split("\n")[0]); }
+{ // 色だけで分けない・キーボードで詰められる・知らせを読み上げに届ける（shared-workflows routines/game-dev.md A1・A6・A7・A8）
+  for (const cvd of [false, true]) {
+    const pa = await newPage();
+    await pa.evaluate(([k, cvd]) => { localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })); localStorage.setItem("a11y-v1", JSON.stringify(cvd ? { cvd: true, calm: true } : {})); }, [KEY, cvd]);
+    await pa.reload();
+    await pa.evaluate(() => { window.__vib = 0; try { Object.defineProperty(navigator, "vibrate", { value: () => { window.__vib++; return true; }, configurable: true }); } catch (e) {} });
+    await pa.click("#go-d");
+    const tag = cvd ? "（色の見分けを助ける・動きを減らす）" : "（ふだん）";
+    const c = await curB(pa);
+    // キーボード：Tab で入れるますは1つだけ。矢印で動き、Enter で選んだおかずを詰め、描き直しても枠はますに残る
+    const tabs = await pa.locator('#bx .cell[tabindex="0"]').count();
+    await pa.focus('#bx .cell[tabindex="0"]');
+    const start = await pa.evaluate(() => +document.activeElement.dataset.i);
+    const t0 = c.tray.find((t) => t.id === c.sel), target = t0.sol[0];
+    // 目当てのますまで矢印で動く
+    const W = await pa.evaluate(() => window.__bz.cur().p.w);
+    for (let i = 0; i < Math.floor(target / W) - Math.floor(start / W); i++) await pa.keyboard.press("ArrowDown");
+    for (let i = 0; i < (target % W) - (start % W); i++) await pa.keyboard.press("ArrowRight");
+    const at = await pa.evaluate(() => +document.activeElement.dataset.i);
+    await pa.keyboard.press("Enter");
+    const n = await curB(pa);
+    const fo = await pa.evaluate(() => ({ inBox: !!document.activeElement.closest("#bx"), i: +document.activeElement.dataset.i }));
+    check(`キーボード：Tab で箱に入り、矢印でますを動き、Enter でおかずを詰める・描き直しても枠はそのます${tag}`, tabs === 1 && at === target && n.placed[t0.id] && n.placed[t0.id].includes(target) && fo.inBox && fo.i === target, JSON.stringify({ tabs, at, target, fo }));
+    await pa.waitForTimeout(80);
+    const sr = await pa.evaluate(() => { const e = document.getElementById("sr"); return { live: e.getAttribute("aria-live"), role: e.getAttribute("role"), text: e.textContent }; });
+    check(`詰めた知らせが読み上げの場所（aria-live）に文字で出る${tag}`, sr.live === "polite" && sr.role === "status" && sr.text.includes("詰めました"), JSON.stringify(sr));
+    // 色だけで分けない：選んだおかずは ✓ の印と aria-pressed・詰めたおかずは点線の枠と「詰めた」・ますの名前は場所とおかず・境目に線
+    const look = await pa.evaluate(() => {
+      const sel = document.querySelector(".pc.sel"), used = document.querySelector(".pc.used"), cur = window.__bz.cur(), j = Object.keys(cur.placed)[0], cells = cur.placed[j];
+      const placed = cells.map((i) => document.querySelector(`#bx .cell[data-i="${i}"]`));
+      const ic2 = placed.map((b) => b.querySelector(".ic2")).filter(Boolean);
+      return {
+        selMark: sel ? getComputedStyle(sel, "::after").content : "", selPressed: sel ? sel.getAttribute("aria-pressed") : "",
+        usedBorder: used ? getComputedStyle(used).borderStyle : "", usedLabel: used ? used.getAttribute("aria-label") : "",
+        label: placed[0].getAttribute("aria-label"), food: cur.p.tray[+j].food[0], emoji: cur.p.tray[+j].food[1],
+        firstEmoji: placed.some((b) => b.textContent.includes(cur.p.tray[+j].food[1]) && !b.querySelector(".ic2")),
+        ic2: ic2.length, ic2Shown: ic2.filter((e) => getComputedStyle(e).display !== "none").length, cells: cells.length,
+        edge: placed.some((b) => /rgba\(58, 42, 31/.test(getComputedStyle(b).borderTopColor + getComputedStyle(b).borderLeftColor + getComputedStyle(b).borderRightColor + getComputedStyle(b).borderBottomColor)),
+        dots: [...document.querySelectorAll(".dots i")].map((i) => i.getBoundingClientRect().height + ":" + getComputedStyle(i).boxShadow.slice(0, 4)),
+      };
+    });
+    check(`選んだおかずは色の枠だけでなく ✓ の印と aria-pressed でも分かる${tag}`, look.selMark.includes("✓") && look.selPressed === "true", JSON.stringify(look));
+    check(`詰めたおかずは台で点線の枠と「詰めた」で分かり、箱のますは「行・列・おかずの名前」で読める${tag}`, look.usedBorder === "dashed" && /詰めた/.test(look.usedLabel) && /\d+行\d+列 /.test(look.label) && look.label.includes(look.food), JSON.stringify(look));
+    check(`詰めたおかずは色だけでなく絵と境目の線でも分かる（色の見分けを助ける設定では全部のますに絵）${tag}`, look.firstEmoji && look.ic2 === look.cells - 1 && look.ic2Shown === (cvd ? look.cells - 1 : 0) && look.edge, JSON.stringify(look));
+    check(`進み具合の点は色だけでなく、大きさ・塗り/枠でも分かる${tag}`, look.dots.length === 3 && look.dots[0] !== look.dots[1], look.dots.join(","));
+    await pa.evaluate(() => { const c = window.__bz.cur(); for (const t of c.p.tray) c.placed[t.id] = t.sol.slice(); window.__bz.paint(); });
+    // 最後の1品をキーボードで詰め直して完成させる
+    await pa.evaluate(() => { const c = window.__bz.cur(), t = c.p.tray[c.p.tray.length - 1]; delete c.placed[t.id]; c.sel = t.id; window.__bz.paint(); document.querySelector(`#bx .cell[data-i="${t.sol[0]}"]`).focus(); });
+    await pa.keyboard.press("Enter");
+    if (!(await curB(pa)).done) { await pa.keyboard.press("Enter"); } // 向きがちがったら同じますでもう一度
+    for (let k = 0; k < 30 && !(await curB(pa)).done; k++) await pa.keyboard.press("Enter");
+    await pa.waitForTimeout(100);
+    const fin = await pa.evaluate(() => ({ done: window.__bz.cur().done, st: document.querySelector(".verdict[role=status]") ? document.querySelector(".verdict .stars").getAttribute("aria-label") : "", off: [...document.querySelectorAll(".verdict .stars .off")].map((e) => e.textContent).join(""), next: document.activeElement && document.activeElement.id, sr: document.getElementById("sr").textContent }));
+    check(`キーボードで詰め終えると「次の箱へ」に枠が移り、できあがりと★の数が文字で知らされる${tag}`, fin.done && fin.next === "next" && /星\dつ/.test(fin.st) && fin.sr.includes("できあがり"), JSON.stringify(fin));
+    check(`★の数は色だけでなく、★と☆の形でも分かる${tag}`, !fin.off || /^☆+$/.test(fin.off), fin.off);
+    const vib = await pa.evaluate(() => window.__vib);
+    check(`動きを減らす設定では震わせない（ふだんは震える）${tag}`, cvd ? vib === 0 : vib > 0, String(vib));
+    await pa.close();
+  }
+}
   await browser.close();
 }
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
+
+{ // 見やすさ・読みやすさ・偏り（shared-workflows template/qa/a11y.mjs の写し。routines/game-dev.md「だれでも遊べるように」）
+  const { spawnSync } = await import("node:child_process");
+  const a = spawnSync(process.execPath, [path.join(root, "qa", "a11y.mjs")], { encoding: "utf8", env: process.env });
+  check("見やすさ・読みやすさの検査（qa/a11y.mjs。中身は qa-report/a11y.md）", a.status === 0, (a.stdout.match(/^- ❌.*$/gm) || []).join(" / ") || (a.status ? a.stderr.slice(-300) : ""));
+}
 
 const ng = results.filter((r) => !r.ok);
 const md = `# お弁当づめ QA\n\n${results.map((r) => `- ${r.ok ? "✅" : "❌"} ${r.name}${r.detail ? `（${r.detail}）` : ""}`).join("\n")}\n\n${ng.length ? `❌ ${ng.length}件` : `✅ ${results.length}項目すべて通過`}\n`;

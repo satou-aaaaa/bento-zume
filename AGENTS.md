@@ -31,6 +31,7 @@ node qa/run.mjs   # 箱の作り方（4つの大きさ×400箱が答えどおり
 - 外へ通信しない。外から読むのは Google Fonts の文字だけ（CSP の `connect-src 'self'` を広げない）。記録は遊ぶ人のブラウザ（localStorage）だけ。
 - 同じ日はどの端末でも同じ問題にする：乱数は `sort` の比較の中で引かない（QA が見る）。少し遅れて動く処理（setTimeout）は、画面が替わっていたら何もしない。
 - 押せる所は高さ44px以上、箱のますは幅320pxの特盛でも36px以上（QA が見る）。機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で組む部分は何百回も作って確かめる（shared-workflows `incidents/2026-10-31-roppo-empty-village.md`）。
+- 見やすさ：`</head>` の前の見やすさの設定（`<!-- a11y:begin -->`〜`end`）は shared-workflows `template/a11y/a11y.html` の写しで、ここでは直さない。`qa/a11y.mjs` も `template/qa/a11y.mjs` の写し（画面の足し方・許しは `qa/a11y.json` に理由つき）。色だけで分けない・コントラスト 4.5:1・知らせは aria-live（`#sr`。`toast` と `tell`）・決めつけの言葉を使わない（shared-workflows `routines/game-dev.md`「だれでも遊べるように」）。おかずは色に加えて絵と境目の線で分け（色の見分けを助ける設定では全部のますに絵・🔒・太い境目）、選んだおかずは ✓、詰めたおかずは点線の枠、★は ☆ と並べる。箱のますは Tab で1つに入り、矢印で動いて Enter・スペースで詰める（描き直しても枠を外さない。QA が見る）。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs`、SNS 用の絵 `og.png` は `node tools/make-og.cjs`（今日の箱を入れない）。
 - 引き継ぎコード（別の端末へ記録を移す）：`transfer.js`・`qa/transfer-check.mjs` は shared-workflows の `template/` の写し（ここで直さない。直すときはひな形を直して配り、`引き継ぎの版` を上げる）。`index.html` の script の `data-keys` は記録のキーだけを書く。記録の形を変えたら `qa/run.mjs` の `checkTransfer` の `sample` も合わせる。sw.js の `SHELL` から `./transfer.js` を外さない（shared-workflows `routines/game-dev.md`「引き継ぎコード」）。
 - 公開リポジトリなので、個人情報・鍵を入れない。
