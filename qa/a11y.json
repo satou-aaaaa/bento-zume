@@ -1,0 +1,11 @@
+{
+  "screens": [
+    { "name": "今日の3箱", "click": ["#go-d"] },
+    { "name": "練習", "click": ["#go-p"] },
+    { "name": "練習の特盛", "click": ["#go-p", ".lv button[data-s='3']"] },
+    { "name": "とことん", "click": ["#go-e"] },
+    { "name": "おかず図鑑", "click": ["#go-dex"] },
+    { "name": "カレンダー", "click": ["#go-cal"] },
+    { "name": "実績", "click": ["#go-ach"] }
+  ]
+}
