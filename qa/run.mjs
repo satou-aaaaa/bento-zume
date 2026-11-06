@@ -408,11 +408,11 @@ try {
     check("キーボードで選んだボタン（カレンダーのあとから遊ぶ日も）に枠が出る", bad.length === 0, bad.join(","));
     await pf.close();
   } catch (e) { check("キーボードで選んだボタン（カレンダーのあとから遊ぶ日も）に枠が出る", false, e.message.split("\n")[0]); }
-{ // とことん：箱が次々に出る・小→中→大→特盛・チケットなしで好きなだけ・降りると自己ベスト（2026-11-05「一日で遊べる量が少なすぎる」・2026-11-06「好きなだけ遊んでほしい」satou さん）
+{ let pe; try { // とことん：箱が次々に出る・小→中→大→特盛・チケットなしで好きなだけ・降りると自己ベスト（2026-11-05「一日で遊べる量が少なすぎる」・2026-11-06「好きなだけ遊んでほしい」satou さん）
   check("ページに🎫・チケットが無い（好きなだけ遊べる）", !/🎫|チケット(?!・回数制限は無い)|life/.test(html.replace(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/, "")));
   check("「…すると開く」のような、遊ぶと開くモードが無い", !/すると開く|で開きます|🔒(?!";position)/.test(html));
   check("Ko-fi は結果の1行と下のリンクだけ（ページの中に2か所）", (html.match(/ko-fi\.com/g) || []).length === 2);
-  const pe = await newPage();
+  pe = await newPage();
   await pe.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await pe.reload();
   check("はじめて開いた日から、上級・とことん・練習のボタンがある", (await pe.locator("#go-h").count()) === 1 && (await pe.locator("#go-e").count()) === 1 && (await pe.locator("#go-p").count()) === 1);
   check("ホームに Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
@@ -441,7 +441,13 @@ try {
   check("とことんの並びが残り少なくなったら箱を足して、終わらない", (await pe.evaluate(() => window.__bz.load().runs.e.list.length)) === 2 + 20);
   await solveNow(pe); await pe.click("#next");
   check("足した箱へ続けて進める（2箱目）", (await pe.textContent("header")).includes("2箱目"));
-  await pe.close(); }
+  // 練習を始めるときも、保存してある最近の箱を避ける（同じ乱数で最初に出る箱を履歴に入れておき、別の箱が選ばれるか。2026-11-06 CodeRabbit）
+  const pr = await pe.evaluate((k) => { const g = window.__bz, R = Math.random, seq = () => { let x = 7; Math.random = () => { x = (x * 48271) % 2147483647; return x / 2147483647; }; }; try { seq(); const first = g.B.boxKey(g.boxOf(g.pickBox(0, new Set()))); const s = JSON.parse(localStorage.getItem(k)); s.recent = [first]; localStorage.setItem(k, JSON.stringify(s)); seq(); g.startRun("p", 0); const L = g.load().runs.p.list; return { first, got: g.B.boxKey(g.boxOf(L[0])) }; } finally { Math.random = R; } }, KEY);
+  check("練習を始めるとき、保存してある最近の箱と同じ組み合わせは選び直す", pr.first !== pr.got, JSON.stringify(pr));
+  // 保存に失敗したタブにだけある「最近の箱」も、別のタブの保存のあとで消えない
+  const rm = await pe.evaluate((k) => { const keep = localStorage.getItem(k); try { mem = JSON.stringify({ v: 1, t: 1, recent: ["A", "B"] }); localStorage.setItem(k, JSON.stringify({ v: 1, t: 2, recent: ["B", "C"] })); const r = load().recent; return { r, ok: JSON.stringify(r) === JSON.stringify(["A", "B", "C"]) }; } finally { mem = null; localStorage.setItem(k, keep); } }, KEY);
+  check("最近遊んだ箱は、保存したものとこのタブにだけあるものを合わせる", rm.ok, JSON.stringify(rm));
+  } catch (e) { check("とことん・練習の検査", false, e.message.split("\n")[0]); } finally { if (pe) await pe.close().catch(() => {}); } }
   try { // 引き継ぎコード（別の端末へ記録を移す。shared-workflows template/qa/transfer-check.mjs）
     await checkTransfer({ browser, url, game: "bento-zume", sample: { "bento-v1": JSON.stringify({ v: 1, tut: true }) }, check, open: async (p) => { await p.click("#howto-ok", { timeout: 1500 }).catch(() => {}); } });
   } catch (e) { check("引き継ぎコード", false, e.message.split("\n")[0]); }
