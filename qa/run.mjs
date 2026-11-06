@@ -15,7 +15,7 @@ const B = createRequire(import.meta.url)(path.join(root, "gen.js"));
 
 // 1. 箱の作り方（ブラウザを使わない）。大きさごとに何百箱も作って確かめる
 {
-  const S = [...B.SIZES, B.HARD], bad = [], dupShape = [], small = [], same = [];
+  const S = [...new Set(B.VARIANTS.flat())], bad = [], dupShape = [], small = [], same = [];
   for (let d = 0; d < 400; d++) S.forEach((sz, si) => {
     const seed = B.seedOf(`qa${d}:${si}`), p = B.make(seed, sz), q = B.make(seed, sz);
     if (!p) { bad.push(`${d}:${si} 作れない`); return; }
@@ -33,9 +33,9 @@ const B = createRequire(import.meta.url)(path.join(root, "gen.js"));
     { const f = {}; p.tray.forEach((t) => { const k = B.canon(t.cells); if (f[t.food[0]] && f[t.food[0]] !== k) dupShape.push(`${d}:${si} おかず`); f[t.food[0]] = k; }); }
     if (p.ways < 1 || B.count(p, 2) < 1) bad.push(`${d}:${si} 詰め方0`);
   });
-  check("どの箱も、答えのとおりにすき間なく埋まる・おかずはつながった形（4つの大きさ×400箱）", bad.length === 0, bad.slice(0, 3).join(","));
+  check(`どの箱も、答えのとおりにすき間なく埋まる・おかずはつながった形（とことん・練習の形も入れて${S.length}つの大きさ×400箱）`, bad.length === 0, bad.slice(0, 3).join(","));
   check("同じ種からは同じ箱ができる（だれでも同じ問題）", same.length === 0, same.slice(0, 3).join(","));
-  check("おかずの大きさは決めた範囲（小2〜4・中3〜4・大3〜5・特盛4〜5）", small.length === 0, small.slice(0, 3).join(","));
+  check("おかずの大きさは決めた範囲（今日の小2〜4・中3〜4・大3〜5・特盛4〜5、とことん・練習の形は VARIANTS のとおり）", small.length === 0, small.slice(0, 3).join(","));
   check("同じ形のおかずは1箱に2つまで・形がちがえばちがうおかず（見分けられる）", dupShape.length === 0, dupShape.slice(0, 3).join(","));
   check("特盛は仕切りが2つ（使えないます）", (() => { const p = B.make(1, B.HARD); return p.blocks.length === 2; })());
   { // 詰め方の数を、別の数え方（全部の置き方を試す）で確かめる
@@ -45,6 +45,18 @@ const B = createRequire(import.meta.url)(path.join(root, "gen.js"));
       const c = {}; p.tray.forEach((t) => { const k = B.canon(t.cells); c[k] = (c[k] || 0) + 1; }); let f = 1; for (const v of Object.values(c)) for (let k = 2; k <= v; k++) f *= k; return n / f; };
     const ng = []; for (let d = 0; d < 40; d++) { const p = B.make(B.seedOf("w" + d), B.SIZES[d % 2]); const w = brute(p); if (Math.min(w, 300) !== p.ways) ng.push(`${d}:${p.ways}/${w}`); }
     check("「この箱の詰め方は○通り」の数が、別の数え方と合う", ng.length === 0, ng.slice(0, 3).join(",")); }
+}
+
+{ // 今日の3箱・上級の箱は、とことん・練習の形を足しても変わらない（過去の日の箱が変わらない。2026-11-06）
+  const { createHash } = await import("node:crypto"), out = [];
+  for (let d = -60; d <= 30; d++) { const k = new Date(Date.parse("2026-11-06") + d * 864e5).toISOString().slice(0, 10);
+    B.SIZES.forEach((S, i) => out.push(JSON.stringify(B.make(B.seedOf(k + ":d:" + i), S)))); [0, 1].forEach((i) => out.push(JSON.stringify(B.make(B.seedOf(k + ":h:" + i), B.HARD)))); }
+  check("今日の3箱・上級の箱は前と同じ（2026-09-07〜12-06 の91日分の中身が、形を足す前の値と一致）", createHash("sha256").update(out.join("\n")).digest("hex") === "578405133fd4cd51b11b27c95c436d5d5e369841100215c7bc730e1578eb8d4a");
+  check("今日の3箱・上級の大きさは VARIANTS の先頭（v なしの箱は今までと同じ大きさ）", B.VARIANTS[0][0] === B.SIZES[0] && B.VARIANTS[1][0] === B.SIZES[1] && B.VARIANTS[2][0] === B.SIZES[2] && B.VARIANTS[3][0] === B.HARD);
+}
+{ // とことん・練習の箱の数：小・中も、おかずの組み合わせが300通り以上（2026-11-06 satou さん「同様の問題がでないよう、数を増やして」。前は小123・中84通り）
+  const pool = B.VARIANTS.slice(0, 2).map((V) => { const k = new Set(); V.forEach((S) => { for (let i = 0; i < 300; i++) k.add(B.boxKey(B.make(B.seedOf("pool" + S.w + S.h + S.max + ":" + i), S))); }); return k.size; });
+  check("とことん・練習の小・中の箱は、それぞれ300通り以上の組み合わせから出る（各形300箱を作って数える）", pool.every((n) => n >= 300), pool.join("/"));
 }
 
 const html = readFileSync(path.join(root, "index.html"), "utf8");
@@ -248,7 +260,7 @@ try {
     await pn.evaluate((k) => { const g = window.__bz, d = new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10); localStorage.setItem(k, JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, eat: {}, boxes: 0, kofi: {}, runs: { d: { mode: "d", date: d, list: g.dailyList(d), res: [0, 1, 2].map(() => ({ h: 0 })), id: "a" } } })); }, KEY);
     await pn.reload();
     check("前の日に終えて閉じても、翌日に開くとその日の記録がつく", await pn.evaluate(() => { const g = window.__bz; return !!g.load().days[new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10)] && !g.load().runs.d; }));
-    check("前の日の結果の画面からは、今日の上級を始められない（今日の分を先に）", !(await pn.locator("#go-h").count()));
+    check("前の日の結果の画面には、今日の上級のボタンを出さない（日付がちがう）", !(await pn.locator("#go-h").count()));
     check("保存に失敗したあと別のタブが新しく保存していたら、古いメモリで上書きせずそちらを読む", await pn.evaluate((K) => { const g = window.__bz, s0 = g.load(); mem = JSON.stringify(Object.assign({}, s0, { t: 1, tagA: 1 })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 2, tagB: 1 }))); const r = g.load(); mem = null; return !!r.tagB && !r.tagA; }, KEY));
     check("保存に失敗したあと別のタブが保存しても、両方の記録（日ごとの結果）を残し、図鑑の数は多いほう", await pn.evaluate((K) => { const g = window.__bz, s0 = g.load(); mem = JSON.stringify(Object.assign({}, s0, { t: 5, days: { "2000-01-01": 1 }, eat: { 卵焼き: 9 } })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 9, days: { "2000-01-02": 1 }, eat: { 卵焼き: 2 } }))); const r = g.load(); mem = null; return !!r.days["2000-01-01"] && !!r.days["2000-01-02"] && r.eat["卵焼き"] === 9; }, KEY));
     check("保存に失敗したタブの時刻が進んでいても、別のタブで先に進んだ途中経過を古いメモリで戻さない", await pn.evaluate((K) => { const g = window.__bz, s0 = g.load(), base = { mode: "d", date: "2000-01-01", list: [{ seed: 1, s: 0 }], id: "x", res: [] }; mem = JSON.stringify(Object.assign({}, s0, { t: 99, runs: { d: Object.assign({}, base) } })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 1, runs: { d: Object.assign({}, base, { res: [{ h: 0 }] }) } }))); const r = g.load(); mem = null; return r.runs.d.res.length === 1; }, KEY));
@@ -396,26 +408,46 @@ try {
     check("キーボードで選んだボタン（カレンダーのあとから遊ぶ日も）に枠が出る", bad.length === 0, bad.join(","));
     await pf.close();
   } catch (e) { check("キーボードで選んだボタン（カレンダーのあとから遊ぶ日も）に枠が出る", false, e.message.split("\n")[0]); }
-{ // とことん：箱が次々に出る・小→中→大→特盛・ヒントは🎫を使う・降りると自己ベスト（2026-11-05 satou さん「一日で遊べる量が少なすぎる」）
-  const pe = await newPage();
+{ let pe; try { // とことん：箱が次々に出る・小→中→大→特盛・チケットなしで好きなだけ・降りると自己ベスト（2026-11-05「一日で遊べる量が少なすぎる」・2026-11-06「好きなだけ遊んでほしい」satou さん）
+  check("ページに🎫・チケットが無い（好きなだけ遊べる）", !/🎫|チケット(?!・回数制限は無い)|life/.test(html.replace(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/, "")));
+  check("「…すると開く」のような、遊ぶと開くモードが無い", !/すると開く|で開きます|🔒(?!";position)/.test(html));
+  check("Ko-fi は結果の1行と下のリンクだけ（ページの中に2か所）", (html.match(/ko-fi\.com/g) || []).length === 2);
+  pe = await newPage();
   await pe.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await pe.reload();
-  check("とことんの並び（300回）：小3→中5→大10→特盛42、種はばらばら", await pe.evaluate(() => { const g = window.__bz; for (let n = 0; n < 300; n++) { const L = g.endlessList(); if (L.length !== 60 || new Set(L.map((x) => x.seed)).size < 59) return false; if (!L.every((x, i) => x.s === (i < 3 ? 0 : i < 8 ? 1 : i < 18 ? 2 : 3))) return false; } return true; }));
+  check("はじめて開いた日から、上級・とことん・練習のボタンがある", (await pe.locator("#go-h").count()) === 1 && (await pe.locator("#go-e").count()) === 1 && (await pe.locator("#go-p").count()) === 1);
+  check("ホームに Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
+  check("とことんの並び（200回）：小3→中5→大10→特盛42、1回の中で同じ組み合わせの箱が出ない・種はばらばら", await pe.evaluate(() => { const g = window.__bz; for (let n = 0; n < 200; n++) { const L = g.endlessList(); if (L.length !== 60 || new Set(L.map((x) => x.seed)).size < 59) return false; if (!L.every((x, i) => x.s === (i < 3 ? 0 : i < 8 ? 1 : i < 18 ? 2 : 3))) return false; const ks = L.slice(0, 18).map((x) => g.B.boxKey(g.boxOf(x))); if (new Set(ks).size !== 18) return false; } return true; }));
+  check("とことんは前の回・最近遊んだ箱と同じ組み合わせを出さない（100回つなげて）", await pe.evaluate(() => { const g = window.__bz; let prev = []; for (let n = 0; n < 100; n++) { const L = g.endlessList(prev); const ks = L.slice(0, 18).map((x) => g.B.boxKey(g.boxOf(x))); if (ks.some((k) => prev.includes(k))) return false; prev = prev.concat(ks).slice(-g.RECENT); } return true; }));
+  check("練習の小・中は、続けて60回遊んでも同じ組み合わせの箱が出ない（最近の150箱を覚えて選び直す）", await pe.evaluate(() => { const g = window.__bz; for (const s of [0, 1]) { const av = new Set(), seen = new Set(); for (let n = 0; n < 60; n++) { const k = g.B.boxKey(g.boxOf(g.pickBox(s, av))); if (seen.has(k)) return false; seen.add(k); } } return true; }));
   check("ホームに「とことん」の大きなボタン", (await pe.locator("#go-e.main").count()) === 1);
   await pe.click("#go-e");
   for (let j = 0; j < 2; j++) { await solveNow(pe); await pe.click("#next"); }
-  check("とことんは何箱目かを出し、🎫が3枚", (await pe.textContent("header")).includes("3箱目") && (await pe.evaluate(() => window.__bz.load().runs.e.life)) === 3);
-  await pe.click("#hint");
-  check("とことんのヒントは🎫を1枚使う", (await pe.evaluate(() => window.__bz.load().runs.e.life)) === 2);
+  check("とことんは何箱目かを出す（🎫は出さない）", (await pe.textContent("header")).includes("3箱目") && !(await pe.textContent("body")).includes("🎫"));
+  await pe.click("#hint"); await pe.click("#hint");
+  check("とことんのヒントは何も減らさず、2回使っても続けられる", (await pe.evaluate(() => window.__bz.cur().hints)) === 2 && (await pe.evaluate(() => !("life" in window.__bz.load().runs.e))));
   await pe.click("#back"); await pe.click("#go-e");
-  check("とことんは途中で閉じても続きから（3箱目・🎫2・ヒント1回のまま）", (await pe.textContent("header")).includes("3箱目") && (await pe.evaluate(() => window.__bz.load().runs.e.life)) === 2 && (await pe.evaluate(() => window.__bz.cur().hints)) === 1);
+  check("とことんは途中で閉じても続きから（3箱目・ヒント2回のまま）", (await pe.textContent("header")).includes("3箱目") && (await pe.evaluate(() => window.__bz.cur().hints)) === 2);
+  await solveNow(pe); await pe.click("#next");
+  check("ヒントを使った箱のあとも、とことんは続く（4箱目）", (await pe.textContent("header")).includes("4箱目") && (await pe.locator("#hint").isEnabled()));
   await pe.click("#quit");
-  check("降りると詰めた箱の数と自己ベスト更新が出て、記録に残る（今日の記録には入らない）", (await pe.textContent("#eres")).includes("2箱") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__bz.load(); return s.ebest === 2 && !s.runs.e && Object.keys(s.days).length === 0; })));
+  check("降りると詰めた箱の数・ヒントの回数・自己ベスト更新が出て、記録に残る（今日の記録には入らない）", (await pe.textContent("#eres")).includes("3箱") && (await pe.textContent("#ehint")).includes("2回") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__bz.load(); return s.ebest === 3 && !s.runs.e && Object.keys(s.days).length === 0 && s.recent.length === 3; })));
+  check("とことんの結果の画面に Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
   await pe.click("#go-e"); await pe.click("#quit");
-  check("ベストに届かないと、ベストと「あと何箱で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと3箱で更新") && (await pe.evaluate(() => window.__bz.load().ebest)) === 2);
-  await pe.click("#go-e");
-  await pe.evaluate((k) => { const s = JSON.parse(localStorage.getItem(k)); s.runs.e.life = 0; localStorage.setItem(k, JSON.stringify(s)); }, KEY); await pe.click("#back"); await pe.click("#go-e");
-  check("🎫が無いとヒントは押せない", await pe.locator("#hint").isDisabled());
-  await pe.close(); }
+  check("ベストに届かないと、ベストと「あと何箱で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと4箱で更新") && (await pe.evaluate(() => window.__bz.load().ebest)) === 3);
+  // 前の版の途中（🎫 life:0 付き・v の無い箱）も読めて、ヒントが押せる
+  await pe.evaluate((k) => { const g = window.__bz, s = JSON.parse(localStorage.getItem(k)); s.runs.e = { mode: "e", date: g.todayKey(), list: [{ seed: 11, s: 0 }, { seed: 12, s: 1 }], res: [], cur: null, life: 0, id: "old" }; localStorage.setItem(k, JSON.stringify(s)); }, KEY);
+  await pe.click("#back"); await pe.click("#go-e");
+  check("前の版のとことんの途中（🎫0枚）も続きから遊べて、ヒントが押せる", (await pe.textContent("header")).includes("1箱目") && (await pe.locator("#hint").isEnabled()) && (await pe.locator("#bx .cell").count()) === 16);
+  check("とことんの並びが残り少なくなったら箱を足して、終わらない", (await pe.evaluate(() => window.__bz.load().runs.e.list.length)) === 2 + 20);
+  await solveNow(pe); await pe.click("#next");
+  check("足した箱へ続けて進める（2箱目）", (await pe.textContent("header")).includes("2箱目"));
+  // 練習を始めるときも、保存してある最近の箱を避ける（同じ乱数で最初に出る箱を履歴に入れておき、別の箱が選ばれるか。2026-11-06 CodeRabbit）
+  const pr = await pe.evaluate((k) => { const g = window.__bz, R = Math.random, seq = () => { let x = 7; Math.random = () => { x = (x * 48271) % 2147483647; return x / 2147483647; }; }; try { seq(); const first = g.B.boxKey(g.boxOf(g.pickBox(0, new Set()))); const s = JSON.parse(localStorage.getItem(k)); s.recent = [first]; localStorage.setItem(k, JSON.stringify(s)); seq(); g.startRun("p", 0); const L = g.load().runs.p.list; return { first, got: g.B.boxKey(g.boxOf(L[0])) }; } finally { Math.random = R; } }, KEY);
+  check("練習を始めるとき、保存してある最近の箱と同じ組み合わせは選び直す", pr.first !== pr.got, JSON.stringify(pr));
+  // 保存に失敗したタブにだけある「最近の箱」も、別のタブの保存のあとで消えない
+  const rm = await pe.evaluate((k) => { const keep = localStorage.getItem(k); try { mem = JSON.stringify({ v: 1, t: 1, recent: ["A", "B"] }); localStorage.setItem(k, JSON.stringify({ v: 1, t: 2, recent: ["B", "C"] })); const r = load().recent; return { r, ok: JSON.stringify(r) === JSON.stringify(["A", "B", "C"]) }; } finally { mem = null; localStorage.setItem(k, keep); } }, KEY);
+  check("最近遊んだ箱は、保存したものとこのタブにだけあるものを合わせる", rm.ok, JSON.stringify(rm));
+  } catch (e) { check("とことん・練習の検査", false, e.message.split("\n")[0]); } finally { if (pe) await pe.close().catch(() => {}); } }
   try { // 引き継ぎコード（別の端末へ記録を移す。shared-workflows template/qa/transfer-check.mjs）
     await checkTransfer({ browser, url, game: "bento-zume", sample: { "bento-v1": JSON.stringify({ v: 1, tut: true }) }, check, open: async (p) => { await p.click("#howto-ok", { timeout: 1500 }).catch(() => {}); } });
   } catch (e) { check("引き継ぎコード", false, e.message.split("\n")[0]); }
