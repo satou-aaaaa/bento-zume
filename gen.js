@@ -11,6 +11,14 @@
     { name: "大", w: 5, h: 5, min: 3, max: 5, block: 0 },
   ];
   const HARD = { name: "特盛", w: 6, h: 6, min: 4, max: 5, block: 2 };
+  // とことん・練習だけで使う箱の形のちがい（今日の3箱・上級は SIZES・HARD のまま。変えると過去の日の箱が変わる）。
+  // 4×4 の小・5×4 の中は、おかずの組み合わせが120通りほどしか無く、すぐ同じ箱が出た（2026-11-06）。形と大きさの幅を足して千通り以上にする
+  const VARIANTS = [
+    [SIZES[0], { name: "小", w: 4, h: 4, min: 2, max: 5, block: 0 }, { name: "小", w: 5, h: 3, min: 2, max: 5, block: 0 }],
+    [SIZES[1], { name: "中", w: 5, h: 4, min: 3, max: 5, block: 0 }, { name: "中", w: 6, h: 3, min: 3, max: 4, block: 0 }],
+    [SIZES[2]],
+    [HARD],
+  ];
   // 形：[[x,y]...]。回すと同じになる形は同じ形（裏返しは別の形）
   const norm = (cells) => { const mx = Math.min(...cells.map((c) => c[0])), my = Math.min(...cells.map((c) => c[1])); return cells.map(([x, y]) => [x - mx, y - my]).sort((a, b) => a[1] - b[1] || a[0] - b[0]); };
   const rot = (cells) => norm(cells.map(([x, y]) => [-y, x]));
@@ -19,6 +27,8 @@
   const canon = (cells) => rotations(cells).map(key).sort()[0];
   // おかず：形ごとに決まる（canon の文字で選ぶ）
   const FOODS = [["えびフライ", "🍤", "#f2a33a"], ["卵焼き", "🥚", "#f7dc5c"], ["ブロッコリー", "🥦", "#5f9e45"], ["おにぎり", "🍙", "#ddd5c2"], ["からあげ", "🍗", "#a8642f"], ["焼き鮭", "🐟", "#f4a08c"], ["ミニトマト", "🍅", "#dd3b2c"], ["ウインナー", "🌭", "#e77d9a"], ["ハンバーグ", "🍖", "#6b3f2a"], ["枝豆", "🫛", "#a9d66f"], ["コロッケ", "🥔", "#c9955a"], ["ぶどう", "🍇", "#8a4fa0"], ["ブルーベリー", "🫐", "#5b6bb8"]];
+  // 箱の見分け：大きさ・仕切り・おかずの形の組み合わせが同じなら同じ問題
+  const boxKey = (p) => p.w + "x" + p.h + "|" + p.blocks.join(",") + "|" + p.shapes.map(canon).sort().join("/");
   const foodOf = (cells) => FOODS[seedOf(canon(cells)) % FOODS.length];
 
   // 箱を切り分ける。返り値 { w, h, blocks:[i], pieces:[[[x,y]...]], sol:[[i...]]（おかずごとのます） }
@@ -89,6 +99,6 @@
     best.size = S.name;
     return best;
   }
-  const api = { rng, seedOf, SIZES, HARD, norm, rot, rotations, canon, key, foodOf, FOODS, carve, count, make };
+  const api = { rng, seedOf, SIZES, HARD, VARIANTS, boxKey, norm, rot, rotations, canon, key, foodOf, FOODS, carve, count, make };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.BENTO = api;
 })(typeof self !== "undefined" ? self : this);
