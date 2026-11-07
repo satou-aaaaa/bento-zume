@@ -511,6 +511,35 @@ try {
     await pa.close();
   }
 }
+{ // スマホでの使いやすさ（2026-11-07 UI/UX の見直し）：1画面目に押すボタン・ボタンの字が折れない・できあがりで箱と「次の箱へ」が並ぶ・結果とホームで「もう1回」が上
+  for (const [w, h] of [[390, 844], [320, 640]]) { let pu; const tag = `（${w}×${h}）`; try {
+    pu = await newPage(w, h);
+    await pu.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await pu.reload();
+    const lay = () => pu.evaluate(() => { window.scrollTo(0, 0); const r = (id) => { const e = document.getElementById(id); return e ? e.getBoundingClientRect() : null; };
+      const subs = [...document.querySelectorAll("#app button.sub")].filter((b) => b.offsetParent && b.id !== "hint").map((b) => [b.textContent.trim(), Math.round(b.getBoundingClientRect().height)]);
+      const l1 = [...document.querySelectorAll("#app .main .l1")].map((e) => [e.textContent, Math.round(e.getBoundingClientRect().width), Math.round(e.closest("button").getBoundingClientRect().width)]);
+      return { vh: innerHeight, over: document.documentElement.scrollWidth - innerWidth, d: r("go-d"), e: r("go-e"), sh: r("share"), subs, l1, eMain: !!document.querySelector("#go-e.main:not(.alt)"), dSub: !!document.querySelector("#go-d.sub"), eFirst: (() => { const a = document.getElementById("go-e"), b = document.getElementById("go-d"); return !!(a && b && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)); })() }; });
+    const wrapOk = (L) => L.subs.every(([, hh]) => hh <= 48) && L.l1.every(([, a, b]) => a <= b - 16);
+    let L = await lay();
+    check(`ホーム：「今日の3箱を詰める」が1画面目に入り、横にはみ出さない${tag}`, L.d.bottom <= L.vh && L.over <= 0, JSON.stringify({ d: L.d.bottom, vh: L.vh, over: L.over }));
+    check(`ホーム：ボタンの字が言葉の途中で折れない（小さいボタンは1行・大きいボタンの名前は1行）${tag}`, wrapOk(L), JSON.stringify([L.subs, L.l1]));
+    await pu.click("#go-d");
+    const tut = await pu.evaluate(() => { const e = document.getElementById("tut"); return e ? e.getBoundingClientRect().bottom <= innerHeight : false; });
+    check(`はじめての箱では、遊び方のひとことが箱のすぐ下（1画面目）に出る${tag}`, tut);
+    await solveNow(pu); await pu.waitForTimeout(150);
+    const dn = await pu.evaluate(() => { const bx = document.getElementById("bx").getBoundingClientRect(), nx = document.getElementById("next").getBoundingClientRect(); return { span: Math.round(nx.bottom - bx.top), vh: innerHeight, tray: !!document.getElementById("tray").offsetParent, clear: !!document.getElementById("clear").offsetParent, hint: !!(document.getElementById("hint") || {}).offsetParent }; });
+    check(`できあがったら台・ヒント・全部もどすを隠し、箱と「次の箱へ」が1画面に収まる${tag}`, !dn.tray && !dn.clear && !dn.hint && dn.span <= dn.vh, JSON.stringify(dn));
+    await pu.click("#next");
+    check(`次の箱では台・ヒントがまた出る${tag}`, await pu.evaluate(() => !!document.getElementById("tray").offsetParent && !!document.getElementById("hint").offsetParent));
+    for (let j = 0; j < 2; j++) { await solveNow(pu); await pu.click("#next"); }
+    L = await lay();
+    check(`今日の結果：「続けて遊ぶ：とことん」がシェアより上で、1画面目に入る${tag}`, L.e && L.sh && L.e.top < L.sh.top && L.e.bottom <= L.vh && L.over <= 0, JSON.stringify({ e: L.e && L.e.bottom, vh: L.vh }));
+    check(`今日の結果：小さいボタンの字が折れない${tag}`, wrapOk(L), JSON.stringify(L.subs));
+    await pu.click("#back"); L = await lay();
+    check(`今日の3箱を終えたホームは、とことんが赤い大きなボタンで「今日の結果を見る」より上・1画面目${tag}`, L.eMain && L.dSub && L.eFirst && L.e.bottom <= L.vh, JSON.stringify({ eMain: L.eMain, dSub: L.dSub, eFirst: L.eFirst, e: L.e && L.e.bottom }));
+    check(`今日の3箱を終えたホームでもボタンの字が折れない${tag}`, wrapOk(L), JSON.stringify([L.subs, L.l1]));
+  } catch (e) { check(`スマホでの使いやすさ${tag}`, false, e.message.split("\n")[0]); } finally { if (pu) await pu.close(); } }
+}
   await browser.close();
 }
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));

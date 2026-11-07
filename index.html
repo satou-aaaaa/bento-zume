@@ -46,9 +46,15 @@ h1 small{font-size:12px;letter-spacing:0;color:var(--ink2);margin-left:8px;font-
 button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:16px;background:var(--red);color:#fff;font-weight:800;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 var(--red2)}
 button.main:active{transform:translateY(2px);box-shadow:0 2px 0 var(--red2)}
 button.main.alt{background:var(--wood2);box-shadow:0 4px 0 #6d4826}
+/* 2段のボタン：上は短い名前（折り返さない）、下に小さく説明。幅320pxでも言葉の途中で折れない（2026-11-07） */
+button.main.two{flex-direction:column;gap:2px;padding:8px 16px}
+.main .l1{white-space:nowrap}
+.main .l2{font-size:12px;font-weight:500}
 button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:15px;padding:0 12px;text-align:center}
 button.sub:disabled{opacity:.4;cursor:default}
 .row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
+/* 幅320pxでも2つ並びの小さいボタンを1行に（「おかず図鑑 0/13」が2行に折れていた。2026-11-07） */
+@media (max-width:360px){.row>.sub{font-size:13px;padding:0 6px;white-space:nowrap}}
 .note{color:var(--ink2);font-size:13px;line-height:1.6;margin:0;text-align:center}
 .note a{color:var(--red2);display:inline-flex;align-items:center;min-height:44px}
 /* お弁当箱 */
@@ -66,6 +72,8 @@ button.sub:disabled{opacity:.4;cursor:default}
 .cell.gap{background:repeating-linear-gradient(45deg,#c44b3522 0 5px,transparent 5px 10px);box-shadow:inset 0 0 0 2px #c44b3588}
 .status .warn{color:var(--red2);font-weight:800}
 .box.win{animation:win .6s}
+/* できあがったら、使い終えた台・ヒント・全部もどすを隠し、箱と「次の箱へ」を1画面に並べる（2026-11-07） */
+#app.boxdone .status,#app.boxdone #tray,#app.boxdone #clearrow,#app.boxdone .playonly{display:none}
 @keyframes win{30%{transform:rotate(-2deg) scale(1.03)}60%{transform:rotate(2deg) scale(1.03)}}
 /* おかずの台 */
 .tray{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:70px}
@@ -464,10 +472,12 @@ function home() {
     <div class="hero" aria-hidden="true">${boxHtml(sample, solOwn(sample), { mini: true })}</div>
     <p class="lead" data-a11y-say>形のちがうおかずを、すき間なく詰める。<br>だれでも同じ1日3箱。</p>
     ${done ? `<div class="share" role="img" aria-label="今日の結果 ${done.h.map((h) => (h ? `ヒント${h}回` : "ヒントなし")).join("・")}">今日の結果　${done.h.map(sq).join("")}</div>` : ""}
-    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${B.SIZES[rd.res.length] ? B.SIZES[rd.res.length].name : ""}の箱）` : `今日の3箱を詰める <small>#${dayNo(k)}</small>`}</button>
-    <button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：特盛の2箱（仕切りあり・ヒントなし）"}</button>
-    ${(() => { const re = s.runs.e && !doneOf(s.runs.e) ? s.runs.e : null; return `<button class="main alt" id="go-e">${re ? `とことんの続きから（${re.res.length + 1}箱目）` : "とことん：何箱続けて詰められる？"}${s.ebest ? ` <small>自己ベスト ${s.ebest}箱</small>` : ""}</button>`; })()}
-    <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">おかず図鑑 ${Object.keys(s.eat).length}/${B.FOODS.length}</button></div>
+    ${(() => { const re = s.runs.e && !doneOf(s.runs.e) ? s.runs.e : null; /* 今日の3箱を終えたら、次にすること（とことん）をいちばん上の赤いボタンにする（2026-11-07） */
+      const goD = `<button class="${done ? "sub" : "main"}" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${B.SIZES[rd.res.length] ? B.SIZES[rd.res.length].name : ""}の箱）` : `今日の3箱を詰める <small>#${dayNo(k)}</small>`}</button>`;
+      const goE = `<button class="main two${done ? "" : " alt"}" id="go-e"><span class="l1">${re ? `とことんの続きから（${re.res.length + 1}箱目）` : "とことん"}</span><span class="l2">${re ? "" : "何箱続けて詰められる？"}${s.ebest ? `${re ? "" : "・"}自己ベスト ${s.ebest}箱` : ""}</span></button>`;
+      const goH = `<button class="main alt${hdone || rh ? "" : " two"}" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : `<span class="l1">上級：特盛の2箱</span><span class="l2">仕切りあり・ヒントなし</span>`}</button>`;
+      return done ? goE + goH + goD : goD + goH + goE; })()}
+    <div class="row"><button class="sub" id="go-p">練習</button><button class="sub" id="go-dex">おかず図鑑 ${Object.keys(s.eat).length}/${B.FOODS.length}</button></div>
     <div class="row"><button class="sub" id="go-cal">カレンダー${missed(s, k).length ? ` <small style="color:var(--red2)">↺${missed(s, k).length}</small>` : ""}</button><button class="sub" id="go-ach">実績 ${achOf(s).filter((a) => a.got).length}/${ACH.length}</button></div>
     <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>遊んだ日</small></div><div><b>${s.boxes}</b><small>詰めた箱</small></div></div>
     <p class="rank">称号：${rankOf(s.boxes)}${nr ? `（あと${nr[0] - s.boxes}箱で${nr[1]}）` : ""}</p>
@@ -528,12 +538,13 @@ function play() {
       ${run.mode === "e" ? `<span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}箱目${s.ebest ? `（ベスト ${s.ebest}）` : ""}</span></header>` : `<div class="dots" aria-label="${i + 1}箱目／${run.list.length}箱">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
       <span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}/${run.list.length}</span></header>`}
     <div id="bx"></div>
+    ${!s.tut || (s.boxes === 0 && i === 0) ? `<p class="note playonly" id="tut">下のおかずを選び、箱のますを押して詰めます。同じますをもう一度押すと向きが変わります。</p>` : ""}
     <div class="status"><span id="left" data-a11y-say></span>${hard ? "<span>ヒントなし</span>" : `<button class="sub" id="hint" style="min-height:44px;padding:0 14px">ヒント</button>`}</div>
     <div class="tray" id="tray"></div>
-    <div class="row"><button class="sub" id="clear">全部もどす</button></div>
-    ${run.mode === "e" ? `<p class="note">好きなだけ続けられます。ヒントを使っても終わりません。</p><button class="sub" id="quit" style="width:100%">ここで降りる（${i}箱で終える）</button>` : ""}
-    <div id="after"></div>
-    ${!s.tut || (s.boxes === 0 && i === 0) ? `<p class="note">おかずを押して選び、箱のますを押して詰めます。同じますをもう一度押すと向きが変わります。</p>` : ""}`;
+    <div class="row" id="clearrow"><button class="sub" id="clear">全部もどす</button></div>
+    ${run.mode === "e" ? `<p class="note playonly">好きなだけ続けられます。ヒントを使っても終わりません。</p><button class="sub playonly" id="quit" style="width:100%">ここで降りる（${i}箱で終える）</button>` : ""}
+    <div id="after"></div>`;
+  app.classList.remove("boxdone");
   $("back").onclick = home;
   $("clear").onclick = clearAll;
   if ($("hint")) $("hint").onclick = hint;
@@ -634,7 +645,7 @@ function check() {
   const p = cur.p, own = ownOf(p, cur.placed);
   for (let i = 0; i < own.length; i++) if (own[i] < 0 && !p.blocks.includes(i)) return;
   if (!same(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
-  cur.done = true; buzz([10, 40, 10]);
+  cur.done = true; buzz([10, 40, 10]); app.classList.add("boxdone");
   const st = starsOf(cur.hints);
   const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints }); r.cur = null; s.boxes++; if (r.mode === "p" || r.mode === "e") remember(s, p); for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
   paint();
@@ -675,7 +686,7 @@ function endFinish(run) {
     ${n ? `<p class="note" id="ehint">ヒント ${run.res.reduce((a, r) => a + (r.h || 0), 0)}回</p>` : ""}
     ${n ? `<div class="minis">${run.list.slice(0, n).map((it, j) => { const p = boxOf(it); return `<div>${boxHtml(p, solOwn(p), { mini: true })}<p>${p.size} ${starStr(starsOf(run.res[j].h))}</p></div>`; }).join("")}</div>` : ""}
     <button class="main" id="go-e">もう一度とことん</button>
-    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑を見る</button></div>
+    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑</button></div>
     <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
   $("back").onclick = home; $("go-e").onclick = () => startRun("e"); $("go-p").onclick = practiceMenu; $("go-dex").onclick = dex;
   window.scrollTo(0, 0);
@@ -701,14 +712,15 @@ function result(mode, k, first, prec) {
     <p class="big" data-a11y-say>${total === 0 ? "ヒントなしで完成！" : `${list.length}箱 完成（ヒント ${total}）`}</p>
     <div class="minis">${list.map((it, j) => { const p = boxOf(it); return `<div>${boxHtml(p, solOwn(p), { mini: true })}<p>${p.size} ${starStr(starsOf(rec.h[j]))}</p></div>`; }).join("")}</div>
     ${got.length ? `<p class="ach-new">🏅 実績：${esc(got.length > 2 ? `${got[0].name} ほか${got.length - 1}つ` : got.map((a) => a.name).join("・"))}</p>` : ""}
+    <!-- 「もう1回」が1画面目に入るよう、続けて遊ぶボタンをシェアより上に置く（2026-11-07） -->
+    ${mode !== "p" ? `<button class="main" id="go-e">続けて遊ぶ：とことん${s.ebest ? `（ベスト ${s.ebest}箱）` : ""}</button>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：特盛の2箱に挑む</button>` : ""}
     ${share ? `<div class="share">${esc(text)}</div>
     <button class="main" id="share">結果をシェア</button>
     <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
     <p class="note">🍱ヒントなし　🟨ヒント1回　🟧ヒント2回<br>次の3箱まで あと <b>${untilNext()}</b></p>` : ""}
-    ${mode !== "p" ? `<button class="main" id="go-e">続けて遊ぶ：とことん${s.ebest ? `（ベスト ${s.ebest}箱）` : ""}</button>` : ""}
-    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：特盛の2箱に挑む</button>` : ""}
     ${mode === "a" ? `<p class="note">あとから遊んだ日は、カレンダーに点線の印で残ります（連続の日には入りません）。</p><button class="main alt" id="go-cal">カレンダーへ</button>` : ""}
-    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑を見る</button></div>
+    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">おかず図鑑</button></div>
     ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
     <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
   $("back").onclick = home;
