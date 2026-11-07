@@ -52,9 +52,9 @@ button.main.two{flex-direction:column;gap:2px;padding:8px 16px}
 .main .l2{font-size:12px;font-weight:500}
 button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:15px;padding:0 12px;text-align:center}
 button.sub:disabled{opacity:.4;cursor:default}
-.row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
-/* 幅320pxでも2つ並びの小さいボタンを1行に（「おかず図鑑 0/13」が2行に折れていた。2026-11-07） */
-@media (max-width:360px){.row>.sub{font-size:13px;padding:0 6px;white-space:nowrap}}
+.row{display:flex;flex-wrap:wrap;gap:10px}.row>.sub,.row>.main{flex:1 1 auto;min-width:0}
+/* 幅320pxでも2つ並びの小さいボタンを1行に（「おかず図鑑 0/13」が2行に折れていた。2026-11-07）。入らないときはボタンごと次の行へ回し、字を大きくしても画面の外へはみ出させない（nowrap は使わない。2026-11-07 CodeRabbit） */
+@media (max-width:360px){.row>.sub{font-size:13px;padding:0 6px}}
 .note{color:var(--ink2);font-size:13px;line-height:1.6;margin:0;text-align:center}
 .note a{color:var(--red2);display:inline-flex;align-items:center;min-height:44px}
 /* お弁当箱 */
@@ -645,6 +645,8 @@ function check() {
   const p = cur.p, own = ownOf(p, cur.placed);
   for (let i = 0; i < own.length; i++) if (own[i] < 0 && !p.blocks.includes(i)) return;
   if (!same(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
+  // できあがりの描き直しで箱のますが作り直される・ヒントの行が隠れる前に、枠がどこにあったかを見ておく
+  const fo = document.activeElement, moveFo = !fo || fo === document.body || !!(fo.closest && fo.closest("#bx, .status"));
   cur.done = true; buzz([10, 40, 10]); app.classList.add("boxdone");
   const st = starsOf(cur.hints);
   const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints }); r.cur = null; s.boxes++; if (r.mode === "p" || r.mode === "e") remember(s, p); for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
@@ -656,7 +658,8 @@ function check() {
     <button class="main" id="next">${fin ? "結果を見る" : "次の箱へ"}</button></div>`;
   $("next").onclick = play;
   tell(`できあがり！ 星${st}つ`);
-  if (document.activeElement && document.activeElement.closest && document.activeElement.closest("#bx")) $("next").focus({ preventScroll: true }); // キーボードで詰め終えたら「次の箱へ」に枠を移す
+  // キーボードで詰め終えたら「次の箱へ」に枠を移す（箱のます・ヒントのボタンから。ヒントの行はできあがりで隠れるので枠が消えないように。2026-11-07 CodeRabbit）
+  if (moveFo || document.activeElement === document.body || (document.activeElement && document.activeElement.closest && document.activeElement.closest("#bx"))) $("next").focus({ preventScroll: true });
   setTimeout(() => { if ($("next") && cur.done) $("next").scrollIntoView({ behavior: calm() ? "auto" : "smooth", block: "nearest" }); }, 60);
 }
 
