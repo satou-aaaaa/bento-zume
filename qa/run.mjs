@@ -438,6 +438,16 @@ try {
   await pe.click("#quit");
   check("降りると詰めた箱の数・ヒントの回数・自己ベスト更新が出て、記録に残る（今日の記録には入らない）", (await pe.textContent("#eres")).includes("3箱") && (await pe.textContent("#ehint")).includes("2回") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__bz.load(); return s.ebest === 3 && !s.runs.e && Object.keys(s.days).length === 0 && s.recent.length === 3; })));
   check("とことんの結果の画面に Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
+  {
+    // 箱を詰め終えた直後（次へを押す前）でも「ここで降りる」が見えて押せ、その箱も数に入る（前は押しても何も起きず、ボタンも隠れていた）
+    const q = await newPage();
+    await q.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await q.reload();
+    await q.click("#go-e"); await solveNow(q);
+    const vis = await q.locator("#quit").isVisible(), lab = await q.textContent("#quit");
+    await q.click("#quit");
+    check("とことんで箱を詰め終えた直後に「ここで降りる」を押すと結果の画面になり、詰めた1箱が数に入る", vis && lab.includes("1箱で終える") && (await q.locator("#eres").count()) === 1 && (await q.textContent("#eres")).includes("1箱") && (await q.evaluate(() => window.__bz.load().ebest)) === 1, lab);
+    await q.close();
+  }
   await pe.click("#go-e"); await pe.click("#quit");
   check("ベストに届かないと、ベストと「あと何箱で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと4箱で更新") && (await pe.evaluate(() => window.__bz.load().ebest)) === 3);
   // 前の版の途中（🎫 life:0 付き・v の無い箱）も読めて、ヒントが押せる
@@ -582,6 +592,10 @@ try {
     check("保存できない帯は画面のいちばん上に場所を取り（ボタンに重ならない）、読み上げの知らせにも出し、ほかの知らせのあとも警告が残る・保存できたら帯と警告が消え、ほかの知らせは残る", await ps.evaluate(async () => { const W = "保存できませんでした", tick = () => new Promise((r) => setTimeout(r, 50)); const orig = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; save(() => {}); const b = document.getElementById("savewarn"); const top = !!b && document.body.firstElementChild === b && getComputedStyle(b).position === "sticky"; const l = document.getElementById("live"); let live = true, kept = true, other = true; if (l) { live = l.textContent.includes(W); l.textContent = ""; await tick(); l.textContent = "べつの知らせ"; await tick(); kept = l.textContent.includes("べつの知らせ") && l.textContent.includes(W); } Storage.prototype.setItem = orig; save(() => {}); await tick(); if (l) other = l.textContent === "べつの知らせ"; return top && live && kept && other && !document.getElementById("savewarn"); }));
     check("保存できない帯は、長い画面を下までスクロールしても画面の上に見えている（body の高さで止まらない）", await ps.evaluate(async () => { const orig = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("full"); }; save(() => {}); const pad = document.createElement("div"); pad.style.height = "3000px"; document.body.appendChild(pad); scrollTo(0, document.documentElement.scrollHeight); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); const b = document.getElementById("savewarn"), r = b && b.getBoundingClientRect(); const ok = !!r && scrollY > 1000 && r.top >= -1 && r.top < 5; pad.remove(); scrollTo(0, 0); Storage.prototype.setItem = orig; save(() => {}); return ok && !document.getElementById("savewarn"); }));
     await ps.close(); }
+{ // 知らせ（.toast）は下のボタンを塞がない（shared-workflows incidents/2026-11-17-known-game-bugs-spread.md）
+  const pt = await browser.newPage(); await pt.goto(url);
+  check("知らせ（.toast）が出ていても、その下のボタンを押せる（pointer-events:none）", await pt.evaluate(() => { const d = document.createElement("div"); d.className = "toast"; document.body.appendChild(d); const v = getComputedStyle(d).pointerEvents; d.remove(); return v === "none"; }));
+  await pt.close(); }
   await browser.close();
 }
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
