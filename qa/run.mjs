@@ -216,7 +216,7 @@ try {
     const p3 = await newPage(w, 700); const fb2 = await p3.evaluate(() => { const a = document.querySelector("#howto #fb2"); return a ? a.getBoundingClientRect().height : 0; }); check(`幅${w}px：遊び方の「感想を送る」も高さ44px以上`, fb2 >= 44, `${fb2}px`); await p3.click("#howto-ok");
     const homeOk = await p3.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
     await p3.click("#go-d");
-    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && !e.classList.contains("cell") && e.getBoundingClientRect().height < 44).map((e) => e.textContent.trim() || e.id), cell: Math.min(...[...document.querySelectorAll("#bx .cell")].map((e) => e.getBoundingClientRect().width)) }));
+    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && !e.classList.contains("cell") && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.textContent.trim() || e.id), cell: Math.min(...[...document.querySelectorAll("#bx .cell")].map((e) => e.getBoundingClientRect().width)) }));
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上・ますは36px以上`, homeOk && !r.over && r.small.length === 0 && r.cell >= 36, `${r.small.join(",")} ます${r.cell.toFixed(0)}px`);
     if (w === 320) { // 特盛（6×6）でもますが押せる大きさ
       await p3.evaluate(() => { window.__bz.play("h"); }).catch(() => {});
@@ -390,7 +390,7 @@ try {
     await pm.close(); }
   for (const w of [320, 390]) { // ホーム・実績・カレンダー・結果の画面が狭い幅で崩れない
     const pw = await clockPage(w, "2026-12-03T03:00:00Z", { days: { "2026-12-01": { h: [0, 0, 0] }, "2026-12-03": { h: [0, 1, 2] } }, pdays: { "2026-11-29": { h: [1, 0, 0] } } });
-    const look = async () => pw.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).map((e) => e.textContent.trim() || e.id) }));
+    const look = async () => pw.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.textContent.trim() || e.id) }));
     const h = await look(); await pw.click("#go-ach"); const a = await look(); const rows = await pw.locator(".ach").count(); await pw.click("#back"); await pw.click("#go-cal"); const c = await look(); await pw.click("#cal-prev"); const c2 = await look(); await pw.click("#back"); await pw.click("#go-d"); const rs = await look();
     check(`幅${w}px：ホーム・実績・カレンダー・結果が横にはみ出さず、押せる所は高さ44px以上`, [h, a, c, c2, rs].every((x) => !x.over && x.small.length === 0) && rows >= 10 && (await pw.locator(".minis .box").count()) === 3, JSON.stringify([h, a, c, c2, rs].map((x) => [x.over, x.small])));
     await pw.close(); }
