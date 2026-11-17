@@ -89,6 +89,7 @@ button.sub:disabled{opacity:.4;cursor:default}
 @keyframes up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 .verdict .hd{display:flex;justify-content:center;align-items:baseline;gap:10px;font-size:22px;font-weight:800}
 .stars{color:var(--gold);letter-spacing:.1em;font-size:20px}
+.straight{color:var(--red2)}
 .stars .off{color:#3a2a1f26}
 .hint{background:var(--paper);border:1px solid var(--red);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center}
 /* ホーム */
@@ -340,6 +341,7 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
     <li>同じますをもう一度押すと、向きと場所が変わります。</li>
     <li>詰めたおかずを押すと台に戻ります。箱をすき間なく埋めたら完成です。</li>
   </ol>
+  <p>挑戦：ヒントなしで、一度も台に戻さずに詰めると ✦まっすぐ詰め（★は変わりません）。</p>
   <p>今日の3箱（小・中・大）はだれでも同じで1日1回。時間制限はありません。</p>
   <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a>　<a href="#" data-a11y-open>見やすさの設定</a></p>
   <button class="main" id="howto-ok" style="width:100%">わかった</button>
@@ -368,7 +370,7 @@ const starStr = (s) => `<span class="stars" role="img" aria-label="星${s}つ">$
 
 // ---- 記録（この端末の localStorage だけ）----
 // 進行中の遊びはモードごとに分けて持つ（練習を始めても今日・上級の途中経過を消さない）。eat：おかず → 詰めた数
-const fresh = () => ({ v: 1, days: {}, hdays: {}, pdays: {}, eat: {}, boxes: 0, runs: {}, tut: false, kofi: {}, ach: {}, ebest: 0, recent: [] }); // pdays：取りこぼした日をあとから遊んだ結果（連続の日・今日の記録には数えない）。ach：結果の画面で知らせ終えた実績
+const fresh = () => ({ v: 1, days: {}, hdays: {}, pdays: {}, eat: {}, boxes: 0, runs: {}, tut: false, kofi: {}, ach: {}, ebest: 0, recent: [], straight: 0 }); // straight：ヒントなし・一度も台に戻さずに詰めた箱の数（挑戦条件。★は変えない） // pdays：取りこぼした日をあとから遊んだ結果（連続の日・今日の記録には数えない）。ach：結果の画面で知らせ終えた実績
 let MODE = "d";
 let mem = null; // 保存できない環境では、開いているあいだだけここに置く
 // 保存に失敗したあとはメモリと保存の両方を読む。記録（日ごとの結果・図鑑）は合わせて数は高いほう、途中経過は同じ日・同じ箱なら進んだほう
@@ -409,6 +411,8 @@ const ACH = [
   ["c1", "🍱", "はじめての★3", "1箱をヒントなしで詰める", (s) => [n0(s), 1]],
   ["clean", "✨", "ヒントいらず", "今日の3箱を全部ヒントなしで", (s) => [clean(s.days) + clean(s.pdays), 1]],
   ["c30", "🏅", "★3を30箱", "ヒントなしで30箱詰める", (s) => [n0(s), 30]],
+  ["s1", "✦", "まっすぐ詰め", "一度も台に戻さずに1箱詰める（ヒントなし）", (s) => [s.straight || 0, 1]],
+  ["s10", "🎯", "読み切り10箱", "まっすぐ詰めを10箱", (s) => [s.straight || 0, 10]],
   ["h1", "🧺", "特盛デビュー", "上級の特盛2箱を詰め切る", (s) => [recs(s.hdays).length, 1]],
   ["h5", "🍙", "特盛の常連", "上級を5日詰め切る", (s) => [recs(s.hdays).length, 5]],
   ["e5", "🥚", "おかず5品", "図鑑に5品集める", (s) => [Object.keys(s.eat).length, 5]],
@@ -544,7 +548,7 @@ function play() {
   const it = run.list[i], p = boxOf(it), hard = run.mode === "h";
   if (!p) { toast("箱を作れませんでした"); return home(); }
   const saved = run.cur && run.cur.i === i ? run.cur : { placed: {}, lock: [], hints: 0 };
-  cur = { i, date: run.date, id: run.id, it, p, placed: valid(p, saved.placed) ? JSON.parse(JSON.stringify(saved.placed)) : {}, lock: (saved.lock || []).slice(), hints: saved.hints || 0, sel: null, last: null, done: false };
+  cur = { i, date: run.date, id: run.id, it, p, placed: valid(p, saved.placed) ? JSON.parse(JSON.stringify(saved.placed)) : {}, lock: (saved.lock || []).slice(), hints: saved.hints || 0, back: saved.back || 0, sel: null, last: null, done: false };
   { const f = p.tray.find((t) => !(t.id in cur.placed)); cur.sel = f ? f.id : null; } // はじめは残りのおかずの先頭を選んでおく
   const label = run.mode === "h" ? "上級・特盛" : run.mode === "p" ? `練習・${p.size}` : run.mode === "e" ? `とことん・${p.size}` : run.mode === "a" ? `${md(run.date)}・${p.size}` : `${p.size}の箱`;
   app.innerHTML = `
@@ -574,7 +578,7 @@ function valid(p, placed) {
   return true;
 }
 const same = (r) => r && cur && r.date === cur.date && r.id === cur.id && r.res.length === cur.i;
-function keep() { save((s) => { const r = s.runs[MODE]; if (same(r)) r.cur = { i: cur.i, placed: cur.placed, lock: cur.lock, hints: cur.hints }; }); }
+function keep() { save((s) => { const r = s.runs[MODE]; if (same(r)) r.cur = { i: cur.i, placed: cur.placed, lock: cur.lock, hints: cur.hints, back: cur.back }; }); }
 function paint() {
   const p = cur.p, own = ownOf(p, cur.placed), gap = cur.done ? new Set() : gapsOf(p, own, p.tray.filter((t) => !(t.id in cur.placed)).map((t) => t.cells.length));
   // 描き直しても、キーボードで選んでいたます・おかずから枠を外さない（WCAG 2.4.3）
@@ -606,7 +610,7 @@ function moveFocus(e, i) {
 }
 function tapPiece(j) {
   if (cur.done) return;
-  if (j in cur.placed) { if (cur.lock.includes(j)) return toast("ヒントで詰めたおかずは動かせません"); delete cur.placed[j]; keep(); }
+  if (j in cur.placed) { if (cur.lock.includes(j)) return toast("ヒントで詰めたおかずは動かせません"); delete cur.placed[j]; cur.back++; keep(); }
   cur.sel = cur.sel === j ? null : j; cur.last = null; paint(); if (cur.sel != null) tell(`${cur.p.tray[j].food[0]}を選びました`);
 }
 // ます i を通る置き方を全部さがす（台の向きを先に、押したますがおかずのまん中に近い順）
@@ -632,7 +636,7 @@ function tapCell(i) {
   }
   if (j0 >= 0) { // 詰めたおかずを押した：台に戻して選んだ状態に
     if (cur.lock.includes(j0)) return toast("ヒントで詰めたおかずは動かせません");
-    delete cur.placed[j0]; cur.sel = j0; cur.last = null; keep(); paint(); tell(`${p.tray[j0].food[0]}を台に戻しました`); return;
+    delete cur.placed[j0]; cur.back++; cur.sel = j0; cur.last = null; keep(); paint(); tell(`${p.tray[j0].food[0]}を台に戻しました`); return;
   }
   if (cur.sel == null) { const free = p.tray.find((t) => !(t.id in cur.placed)); toast(free ? "先に下のおかずを押して選んでください" : "箱にすき間が残っています"); return; }
   const t = p.tray[cur.sel], cand = placements(p, t, i, own);
@@ -645,7 +649,7 @@ function tapCell(i) {
   tell(`${t.food[0]}を詰めました。${$("bx").querySelector(".cell.gap") ? "入らないすき間があります。" : ""}${left ? `のこり${left}品${next ? `、次は${next.food[0]}` : ""}` : ""}`);
   check();
 }
-function clearAll() { if (cur.done) return; for (const j of Object.keys(cur.placed)) if (!cur.lock.includes(+j)) delete cur.placed[j]; cur.sel = null; cur.last = null; keep(); paint(); }
+function clearAll() { if (cur.done) return; let n = 0; for (const j of Object.keys(cur.placed)) if (!cur.lock.includes(+j)) { delete cur.placed[j]; n++; } if (n) cur.back++; cur.sel = null; cur.last = null; keep(); paint(); }
 // ヒント：まだ答えの場所にないおかずを1つ、答えの場所に詰める（重なるおかずは台に戻す）
 function hint() {
   if (cur.done || cur.hints >= 2) return;
@@ -663,13 +667,13 @@ function check() {
   const fo = document.activeElement, moveFo = !fo || fo === document.body || !!(fo.closest && fo.closest("#bx, .status"));
   cur.done = true; buzz([10, 40, 10]); app.classList.add("boxdone");
   const st = starsOf(cur.hints);
-  const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints }); r.cur = null; s.boxes++; if (r.mode === "p" || r.mode === "e") remember(s, p); for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
+  const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints, b: cur.back }); r.cur = null; s.boxes++; if (!cur.hints && !cur.back) s.straight = (s.straight || 0) + 1; if (r.mode === "p" || r.mode === "e") remember(s, p); for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
   paint();
   const r = s.runs[MODE], fin = r && r.res.length >= r.list.length;
   if ($("quit") && r) $("quit").textContent = `ここで降りる（${r.res.length}箱で終える）`; // とことんは詰め終えた直後も降りられる（詰めた箱も数に入る）
   $("after").innerHTML = `<div class="verdict" role="status">
     <div class="hd" data-a11y-say>できあがり！ ${starStr(st)}</div>
-    <p class="note">${p.tray.map((t) => t.food[1]).join("")}<br>${p.ways <= 1 ? "詰め方が1通りしかない箱でした。" : `この箱の詰め方は全部で${p.ways >= 300 ? "300通り以上" : p.ways + "通り"}。`}</p>
+    <p class="note">${p.tray.map((t) => t.food[1]).join("")}<br>${cur.hints ? "" : cur.back ? `台に戻した回数 ${cur.back}。0回で詰めると ✦まっすぐ詰め。<br>` : `<b class="straight">✦ まっすぐ詰め</b>（一度も台に戻さずに詰めた）<br>`}${p.ways <= 1 ? "詰め方が1通りしかない箱でした。" : `この箱の詰め方は全部で${p.ways >= 300 ? "300通り以上" : p.ways + "通り"}。`}</p>
     <button class="main" id="next">${fin ? "結果を見る" : "次の箱へ"}</button></div>`;
   $("next").onclick = play;
   tell(`できあがり！ 星${st}つ`);

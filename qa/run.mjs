@@ -438,6 +438,25 @@ try {
   await pe.click("#quit");
   check("降りると詰めた箱の数・ヒントの回数・自己ベスト更新が出て、記録に残る（今日の記録には入らない）", (await pe.textContent("#eres")).includes("3箱") && (await pe.textContent("#ehint")).includes("2回") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__bz.load(); return s.ebest === 3 && !s.runs.e && Object.keys(s.days).length === 0 && s.recent.length === 3; })));
   check("とことんの結果の画面に Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
+  { // 挑戦条件「まっすぐ詰め」（2026-11-17）：ヒントなし・一度も台に戻さずに詰めると ✦。★は変えない。台に戻す・全部戻すは数え、向きを変えるのは数えない
+    const pm = await newPage();
+    await pm.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await pm.reload();
+    await pm.click("#go-e");
+    await solveNow(pm);
+    const a1 = await pm.evaluate(() => ({ t: document.querySelector(".verdict").textContent, n: window.__bz.load().straight, st: document.querySelector(".verdict .stars").getAttribute("aria-label") }));
+    check("台に戻さずヒントなしで詰めると「✦ まっすぐ詰め」が出て数に入り、★は3つのまま", a1.t.includes("まっすぐ詰め") && !a1.t.includes("台に戻した回数") && a1.n === 1 && a1.st === "星3つ", JSON.stringify(a1));
+    await pm.click("#next");
+    const c0 = await curB(pm), t0 = c0.tray.find((t) => t.id === c0.sel);
+    await pm.click(`#bx .cell[data-i="${t0.sol[0]}"]`);
+    await pm.click("#clear");
+    check("「全部戻す」は台に戻した1回に数える", await pm.evaluate(() => window.__bz.cur().back === 1));
+    await pm.reload(); await pm.evaluate(() => window.__bz.play("e"));
+    const b1 = await pm.evaluate(() => window.__bz.cur().back);
+    await solveNow(pm);
+    const a2 = await pm.evaluate(() => ({ t: document.querySelector(".verdict").textContent, n: window.__bz.load().straight, res: window.__bz.load().runs.e && window.__bz.load().runs.e.res }));
+    check("台に戻したあとで詰めると回数が出て、まっすぐ詰めには数えない（途中で開き直しても回数は残る）", b1 === 1 && a2.t.includes("台に戻した回数 1") && a2.n === 1 && a2.res && a2.res[a2.res.length - 1].b === 1, JSON.stringify({ b1, ...a2 }));
+    await pm.close();
+  }
   {
     // 箱を詰め終えた直後（次へを押す前）でも「ここで降りる」が見えて押せ、その箱も数に入る（前は押しても何も起きず、ボタンも隠れていた）
     const q = await newPage();
