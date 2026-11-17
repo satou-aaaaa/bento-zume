@@ -547,13 +547,13 @@ function play() {
     <div class="status"><span id="left" data-a11y-say></span>${hard ? "<span>ヒントなし</span>" : `<button class="sub" id="hint" style="min-height:44px;padding:0 14px">ヒント</button>`}</div>
     <div class="tray" id="tray"></div>
     <div class="row" id="clearrow"><button class="sub" id="clear">全部もどす</button></div>
-    ${run.mode === "e" ? `<p class="note playonly">好きなだけ続けられます。ヒントを使っても終わりません。</p><button class="sub playonly" id="quit" style="width:100%">ここで降りる（${i}箱で終える）</button>` : ""}
+    ${run.mode === "e" ? `<p class="note playonly">好きなだけ続けられます。ヒントを使っても終わりません。</p><button class="sub" id="quit" style="width:100%">ここで降りる（${i}箱で終える）</button>` : ""}
     <div id="after"></div>`;
   app.classList.remove("boxdone");
   $("back").onclick = home;
   $("clear").onclick = clearAll;
   if ($("hint")) $("hint").onclick = hint;
-  if ($("quit")) $("quit").onclick = () => { if (cur && cur.done) return; finish(); };
+  if ($("quit")) $("quit").onclick = () => finish();
   paint();
   window.scrollTo(0, 0);
 }
@@ -657,6 +657,7 @@ function check() {
   const s = save((s) => { const r = s.runs[MODE]; if (!same(r)) return; r.res.push({ h: cur.hints }); r.cur = null; s.boxes++; if (r.mode === "p" || r.mode === "e") remember(s, p); for (const t of p.tray) s.eat[t.food[0]] = (s.eat[t.food[0]] || 0) + 1; });
   paint();
   const r = s.runs[MODE], fin = r && r.res.length >= r.list.length;
+  if ($("quit") && r) $("quit").textContent = `ここで降りる（${r.res.length}箱で終える）`; // とことんは詰め終えた直後も降りられる（詰めた箱も数に入る）
   $("after").innerHTML = `<div class="verdict" role="status">
     <div class="hd" data-a11y-say>できあがり！ ${starStr(st)}</div>
     <p class="note">${p.tray.map((t) => t.food[1]).join("")}<br>${p.ways <= 1 ? "詰め方が1通りしかない箱でした。" : `この箱の詰め方は全部で${p.ways >= 300 ? "300通り以上" : p.ways + "通り"}。`}</p>

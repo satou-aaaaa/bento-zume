@@ -438,6 +438,16 @@ try {
   await pe.click("#quit");
   check("降りると詰めた箱の数・ヒントの回数・自己ベスト更新が出て、記録に残る（今日の記録には入らない）", (await pe.textContent("#eres")).includes("3箱") && (await pe.textContent("#ehint")).includes("2回") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__bz.load(); return s.ebest === 3 && !s.runs.e && Object.keys(s.days).length === 0 && s.recent.length === 3; })));
   check("とことんの結果の画面に Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
+  {
+    // 箱を詰め終えた直後（次へを押す前）でも「ここで降りる」が見えて押せ、その箱も数に入る（前は押しても何も起きず、ボタンも隠れていた）
+    const q = await newPage();
+    await q.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await q.reload();
+    await q.click("#go-e"); await solveNow(q);
+    const vis = await q.locator("#quit").isVisible(), lab = await q.textContent("#quit");
+    await q.click("#quit");
+    check("とことんで箱を詰め終えた直後に「ここで降りる」を押すと結果の画面になり、詰めた1箱が数に入る", vis && lab.includes("1箱で終える") && (await q.locator("#eres").count()) === 1 && (await q.textContent("#eres")).includes("1箱") && (await q.evaluate(() => window.__bz.load().ebest)) === 1, lab);
+    await q.close();
+  }
   await pe.click("#go-e"); await pe.click("#quit");
   check("ベストに届かないと、ベストと「あと何箱で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと4箱で更新") && (await pe.evaluate(() => window.__bz.load().ebest)) === 3);
   // 前の版の途中（🎫 life:0 付き・v の無い箱）も読めて、ヒントが押せる
