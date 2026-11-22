@@ -12,7 +12,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const url = pathToFileURL(path.join(root, "index.html")).href;
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
-const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）
+const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.evaluate(() => !!(window.Core && Core.coach && Core.coach.active()))) { await q.evaluate(() => { Core.coach.leave(); scrollTo(0, 0); }); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）
 const B = createRequire(import.meta.url)(path.join(root, "gen.js"));
 
 // 1. 箱の作り方（ブラウザを使わない）。大きさごとに何百箱も作って確かめる
@@ -214,7 +214,7 @@ try {
 
   // 4. スマホ幅：はみ出さない・押せる所は44px以上（箱のますは幅320でも36px以上）
   for (const w of [320, 390]) {
-    const p3 = await newPage(w, 700); await firstClose(p3).then(() => p3.click("#f-how")); const fb2 = await p3.evaluate(() => { const a = document.querySelector("#howto #fb2"); return a ? a.getBoundingClientRect().height : 0; }); check(`幅${w}px：遊び方の「感想を送る」も高さ44px以上`, fb2 >= 44, `${fb2}px`); await firstClose(p3);
+    const p3 = await newPage(w, 700); await firstClose(p3).then(() => p3.evaluate(() => openHow())); const fb2 = await p3.evaluate(() => { const a = document.querySelector("#howto #fb2"); return a ? a.getBoundingClientRect().height : 0; }); check(`幅${w}px：遊び方の「感想を送る」も高さ44px以上`, fb2 >= 44, `${fb2}px`); await firstClose(p3);
     const homeOk = await p3.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
     await p3.click("#go-d");
     const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && !e.classList.contains("cell") && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.textContent.trim() || e.id), cell: Math.min(...[...document.querySelectorAll("#bx .cell")].map((e) => e.getBoundingClientRect().width)) }));
@@ -421,6 +421,7 @@ try {
   check("Ko-fi は結果の1行と下のリンクだけ（ページの中に2か所）", (html.match(/ko-fi\.com/g) || []).length === 2);
   pe = await newPage();
   await pe.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await pe.reload();
+  await firstClose(pe);
   check("はじめて開いた日から、上級・とことん・練習のボタンがある", (await pe.locator("#go-h").count()) === 1 && (await pe.locator("#go-e").count()) === 1 && (await pe.locator("#go-p").count()) === 1);
   check("ホームに Ko-fi のひとことは出ない", (await pe.locator(".kofi").count()) === 0);
   check("とことんの並び（200回）：小3→中5→大10→特盛42、1回の中で同じ組み合わせの箱が出ない・種はばらばら", await pe.evaluate(() => { const g = window.__bz; for (let n = 0; n < 200; n++) { const L = g.endlessList(); if (L.length !== 60 || new Set(L.map((x) => x.seed)).size < 59) return false; if (!L.every((x, i) => x.s === (i < 3 ? 0 : i < 8 ? 1 : i < 18 ? 2 : 3))) return false; const ks = L.slice(0, 18).map((x) => g.B.boxKey(g.boxOf(x))); if (new Set(ks).size !== 18) return false; } return true; }));
