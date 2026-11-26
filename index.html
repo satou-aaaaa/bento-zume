@@ -828,7 +828,7 @@ function toast(t) { const d = document.createElement("div"); d.className = "toas
 // 知らせを読み上げソフトにも届ける（画面の知らせと同じ文。WCAG 4.1.3）
 function tell(t) { const e = $("sr"); if (!e) return; e.textContent = ""; setTimeout(() => { e.textContent = t; }, 30); }
 const calm = () => !!(window.A11y && A11y.on("calm"));
-const buzz = (n = 12) => { if (calm()) return; try { navigator.vibrate && navigator.vibrate(n); } catch (e) {} }; // 動きを減らす設定では震わせない
+const buzz = Core.buzz; // 共通部品 game-core（「動きを減らす」では震わせない）
 const esc = Core.esc; // 共通部品 game-core（" と ' も変える。属性の中でも切れない）
 const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="#" data-a11y-open>見やすさ</a><a href="#" data-hk>引き継ぎ</a><a href="${FEEDBACK}" data-feedback="fun" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
 function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
@@ -1142,7 +1142,7 @@ const sq = (h) => (h === 0 ? "🍱" : h === 1 ? "🟨" : "🟧");
 function shareText(mode, k, rec) {
   return `お弁当づめ${mode === "h" ? " 特盛" : ""} #${dayNo(k)} ${md(k)}\n${rec.h.map(sq).join("")}${rec.h.every((h) => h === 0) ? " ヒントなしで完成" : ""}`;
 }
-function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
+function untilNext() { return Core.untilNext(); } // 次の回までの時間（共通部品 game-core）
 function result(mode, k, first, prec) {
   Core.screens.mark("result"); // 「戻る」でホームへ（sync-template の migrateBack）
   const s = load();
