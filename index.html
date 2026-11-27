@@ -979,7 +979,7 @@ function play() {
       ${run.mode === "e" ? `<span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}箱目${s.ebest ? `（ベスト ${s.ebest}）` : ""}</span></header>` : `<div class="dots" aria-label="${i + 1}箱目／${run.list.length}箱">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
       <span style="font-size:13px;color:var(--ink2)">${label} ${i + 1}/${run.list.length}</span></header>`}
     <div id="bx"></div>
-    ${!s.tut || (s.boxes === 0 && i === 0) ? `<p class="note playonly" id="tut">下のおかずを選び、箱のますを押して詰めます。同じますをもう一度押すと向きが変わります。</p>` : ""}
+    ${!s.tut || (s.boxes === 0 && i === 0) ? `<p class="note playonly" id="tut">下のおかずを選び、箱のますを押して詰めます。同じますをもう一度押すと、向きと場所が変わります。</p>` : ""}
     <div class="status"><span id="left" data-a11y-say></span>${hard ? "<span>ヒントなし</span>" : `<button class="sub" id="hint" style="min-height:44px;padding:0 14px">ヒント</button>`}</div>
     <div class="tray" id="tray"></div>
     <div class="row" id="clearrow"><button class="sub" id="clear">全部もどす</button></div>
@@ -1055,7 +1055,7 @@ function tapCell(i) {
   // 直前に詰めたおかずの同じますをもう一度押した：次の向き・場所へ
   if (j0 >= 0 && cur.last && cur.last.j === j0 && cur.last.cell === i) {
     const t = p.tray[j0], cand = placements(p, t, i, own);
-    if (cand.length > 1) { cur.last.k = (cur.last.k + 1) % cand.length; cur.placed[j0] = cand[cur.last.k]; cur.pop = j0; buzz(); keep(); paint(); tell(`${t.food[0]}の向きを変えました`); return; }
+    if (cand.length > 1) { cur.last.k = (cur.last.k + 1) % cand.length; cur.placed[j0] = cand[cur.last.k]; cur.pop = j0; buzz(); keep(); paint(); tell(`${t.food[0]}の置き方を変えました`); return; }
   }
   if (j0 >= 0) { // 詰めたおかずを押した：台に戻して選んだ状態に
     if (cur.lock.includes(j0)) return toast("ヒントで詰めたおかずは動かせません");
@@ -1191,7 +1191,7 @@ function dex() {
   const s = load(), got = B.FOODS.filter((f) => s.eat[f[0]]).length;
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>おかず図鑑<small>${got}/${B.FOODS.length}品・詰めた箱 ${s.boxes}</small></h1><span></span></header>
-    <p class="note">詰めたおかずが集まります。1つの箱では、形のちがうおかずは必ずちがうおかずになります。</p>
+    <p class="note">詰めたおかずが集まります。1つの箱の中では、形がちがえば、おかずもちがいます。</p>
     <div class="dex">${B.FOODS.map((f) => s.eat[f[0]] ? `<div><b>${f[1]}</b><span><em>${f[0]}</em><br>${s.eat[f[0]]}回 詰めた</span></div>` : `<div class="no"><b>${f[1]}</b><span><em>？？？</em><br>まだ出会っていない</span></div>`).join("")}</div>
     ${footer()}`;
   $("back").onclick = home;
